@@ -1,0 +1,26 @@
+{
+  "name": "shopping",
+  "version": "1.0.0",
+  "description": "這是一個 Vue 3 + Express 的練習專案。\r 練習一下Pull",
+  "main": "index.js",
+  "scripts": {
+    "backend": "cd backend && node server.js",
+    "frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aa96173229-ship-it/Shopping.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/aa96173229-ship-it/Shopping/issues"
+  },
+  "homepage": "https://github.com/aa96173229-ship-it/Shopping#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
