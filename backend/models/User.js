@@ -1,26 +1,21 @@
 // backend/models/User.js
 const { DataTypes } = require('sequelize');
-const sequelize = require('../db'); // 引入剛剛寫好的連線設定
+const sequelize = require('../db');
+const bcrypt = require('bcryptjs'); // 記得要安裝這個，如果沒安裝會報錯
 
 const User = sequelize.define('User', {
-  // 1. Email (帳號)
+  username: {
+    type: DataTypes.STRING,
+    allowNull: true, // 允許舊的使用者沒有名字
+  },
   email: {
     type: DataTypes.STRING,
-    allowNull: false, // 不能是空的
-    unique: true,     // 不能重複
-    validate: {
-      isEmail: true,  // 確保格式是 email
-    },
+    allowNull: false,
+    unique: true, // ❌ 這就是 400 錯誤最常見的原因：Email 不能重複
   },
-  // 2. Password (密碼 - 存 Hash)
   password: {
     type: DataTypes.STRING,
     allowNull: false,
-  },
-  // 3. Role (權限 - 未來做管理員功能用)
-  role: {
-    type: DataTypes.STRING,
-    defaultValue: 'user', // 預設是一般使用者
   },
 });
 

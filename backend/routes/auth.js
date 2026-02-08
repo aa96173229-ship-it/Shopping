@@ -1,69 +1,62 @@
 // backend/routes/auth.js
 const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 const router = express.Router();
-const bcrypt = require('bcryptjs'); // 加密用的
-const jwt = require('jsonwebtoken'); // 發身分證用的
-const User = require('../models/User'); // 引入 User 模型
 
-// 1. 註冊 API (POST /register)
+// 註冊
 router.post('/register', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, email, password } = req.body;
 
-    // 檢查 Email 是否已被註冊
-    const userExist = await User.findOne({ where: { email } });
-    if (userExist) {
-      return res.status(400).json({ message: '此 Email 已經被註冊過了' });
+    // 1. 檢查是否已經被註冊
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: '這個 Email 已經被註冊過了' });
     }
 
-    // 密碼加密 (雜湊) !!! 重要安全步驟 !!!
+    // 2. 加密密碼
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 建立新使用者
-    const newUser = await User.create({
+    // 3. 建立新使用者
+    const user = await User.create({
+      username,
       email,
-      password: hashedPassword, // 存入資料庫的是亂碼
+      password: hashedPassword
     });
 
-    res.status(201).json({ message: '註冊成功', user: { id: newUser.id, email: newUser.email } });
+    res.status(201).json({ message: '註冊成功', user });
   } catch (error) {
-    console.error(error);
+    console.error('註冊錯誤:', error); // 這行會讓你在終端機看到詳細錯誤
     res.status(500).json({ message: '伺服器錯誤' });
   }
 });
 
-// 2. 登入 API (POST /login)
+// 登入
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    
     // 找使用者
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(400).json({ message: '帳號或密碼錯誤' }); // 為了安全，不告訴他是帳號錯還是密碼錯
+      return res.status(401).json({ message: '找不到此帳號' });
     }
 
-    // 驗證密碼 (拿輸入的密碼跟資料庫的亂碼比對)
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: '帳號或密碼錯誤' });
+    // 比對密碼
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({ message: '密碼錯誤' });
     }
 
-    // 登入成功，發放 JWT (身分證)
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET, // 記得 .env 要有這行
-      { expiresIn: '24h' } // 24小時後過期
-    );
-
-    res.json({
-      message: '登入成功',
-      token, // 前端要存起來
-      user: { id: user.id, email: user.email }
-    });
+    // 發送 Token
+    const token = jwt.sign({ id: user.id, email: user.email }, 'SECRET_KEY', { expiresIn: '1h' });
+    
+    res.json({ token, user });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: '伺服器錯誤' });
+    res.status(500).json({ message: '登入錯誤' });
   }
 });
 

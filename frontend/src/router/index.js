@@ -24,8 +24,27 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView
-    }
+    },
     // ---------------------------
+    {
+      path: '/cart',
+      name: 'cart',
+      component: () => import('../views/CartView.vue')
+    },
+    // ... 前面的 routes
+    {
+      path: '/',
+      name: 'home',
+      component: () => import('../views/HomeView.vue')
+    },
+    // 👇 加入這一段 👇
+    {
+      path: '/product/:id',
+      name: 'product',
+      component: () => import('../views/ProductView.vue')
+    },
+    // 👆 加入這一段 👆
+    // ... 後面的 routes
   ]
 })
 
