@@ -1,50 +1,47 @@
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, computed } from 'vue';
 import { useCartStore } from '../stores/cart';
 
 const cartStore = useCartStore();
 
+// 一進來就去後端拿資料
 onMounted(() => {
   cartStore.fetchCart();
+});
+
+// 計算總金額
+const totalPrice = computed(() => {
+  return cartStore.items.reduce((total, item) => {
+    return total + (item.Product.price * item.quantity);
+  }, 0);
 });
 </script>
 
 <template>
   <div class="cart-container">
-    <h1>🛒 我的購物車</h1>
+    <h2>🛒 我的購物車</h2>
 
     <div v-if="cartStore.items.length === 0" class="empty-cart">
       購物車是空的，快去買東西吧！
-      <router-link to="/" class="btn-go-shop">去逛逛</router-link>
     </div>
 
-    <div v-else>
-      <div class="cart-list">
-        <div v-for="item in cartStore.items" :key="item.id" class="cart-item">
-          <img :src="item.Product?.imageUrl" alt="商品圖片" class="item-img" />
-          
-          <div class="item-info">
-            <h3>{{ item.Product?.title }}</h3>
-            <p class="price">單價：NT$ {{ item.Product?.price }}</p>
-          </div>
-
-          <div class="quantity-control">
-            <button @click="cartStore.updateQuantity(item.id, item.quantity - 1)">-</button>
-            <span>{{ item.quantity }}</span>
-            <button @click="cartStore.updateQuantity(item.id, item.quantity + 1)">+</button>
-          </div>
-
-          <div class="subtotal">
-            NT$ {{ (item.Product?.price * item.quantity) }}
-          </div>
-
-          <button @click="cartStore.removeItem(item.id)" class="btn-remove">×</button>
+    <div v-else class="cart-list">
+      <div v-for="item in cartStore.items" :key="item.id" class="cart-item">
+        <img :src="item.Product.imageUrl" alt="商品圖" class="item-img" />
+        
+        <div class="item-info">
+          <h3>{{ item.Product.title }}</h3>
+          <p>單價: ${{ item.Product.price }}</p>
+          <p>數量: {{ item.quantity }}</p>
         </div>
-      </div>
+        
+        <p class="item-total">小計: ${{ item.Product.price * item.quantity }}</p>
 
-      <div class="cart-footer">
-        <h2>總金額：NT$ {{ cartStore.totalPrice }}</h2>
-        <button class="btn-checkout">前往結帳</button>
+        </div>
+
+      <div class="checkout-section">
+        <h3>總金額: NT$ {{ totalPrice }}</h3>
+        <button class="btn-checkout">去結帳</button>
       </div>
     </div>
   </div>
@@ -59,9 +56,9 @@ onMounted(() => {
 .cart-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   border-bottom: 1px solid #eee;
   padding: 1rem 0;
+  gap: 1rem;
 }
 .item-img {
   width: 80px;
@@ -70,52 +67,21 @@ onMounted(() => {
   border-radius: 4px;
 }
 .item-info {
-  flex: 1;
-  margin-left: 1rem;
+  flex-grow: 1;
 }
-.quantity-control button {
-  width: 30px;
-  height: 30px;
-  background: #f0f0f0;
-  border: none;
-  cursor: pointer;
-}
-.quantity-control span {
-  margin: 0 10px;
-}
-.btn-remove {
-  background: #ff4d4f;
-  color: white;
-  border: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  cursor: pointer;
-  margin-left: 1rem;
-}
-.cart-footer {
-  margin-top: 2rem;
-  text-align: right;
-  border-top: 2px solid #eee;
-  padding-top: 1rem;
+.item-total {
+  font-weight: bold;
+  color: #e74c3c;
 }
 .btn-checkout {
   background: #42b883;
   color: white;
   border: none;
-  padding: 10px 30px;
-  font-size: 1.2rem;
+  padding: 10px 20px;
   border-radius: 4px;
-  cursor: pointer;
-}
-.empty-cart {
-  text-align: center;
-  margin-top: 3rem;
-  color: #666;
-}
-.btn-go-shop {
-  display: block;
   margin-top: 1rem;
-  color: #42b883;
+  cursor: pointer;
+  width: 100%;
+  font-size: 1.2rem;
 }
 </style>
