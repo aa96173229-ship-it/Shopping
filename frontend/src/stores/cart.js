@@ -27,17 +27,16 @@ export const useCartStore = defineStore('cart', {
       }
     },
 
-    // 加入購物車 (重點在這裡！)
+    // 加入購物車
     async addToCart(productId, quantity = 1) {
-      const authStore = useAuthStore(); // 👈 3. 啟用 Auth 功能
+      const authStore = useAuthStore(); 
 
-      // 👇👇👇 4. 守門員邏輯 👇👇👇
+      // 守門員邏輯
       if (!authStore.token) {
         alert('請先登入會員，才能加入購物車喔！');
-        router.push('/login'); // 把人踢去登入頁
-        return; // ⛔️ 停止！不準執行後面的程式碼
+        router.push('/login'); 
+        return; 
       }
-      // 👆👆👆 檢查結束 👆👆👆
 
       try {
         await axios.post('http://localhost:3000/api/cart/items', {
@@ -53,6 +52,38 @@ export const useCartStore = defineStore('cart', {
         console.error('加入失敗:', error);
         alert('加入購物車失敗');
       }
+    },
+
+    // 👇👇👇 新增：結帳功能 👇👇👇
+    async checkout() {
+      const authStore = useAuthStore();
+      
+      // 雙重保險：沒登入不能結帳
+      if (!authStore.token) {
+        alert('請先登入');
+        router.push('/login');
+        return;
+      }
+
+      try {
+        // 呼叫後端結帳 API (建立訂單、扣庫存、清空後端購物車)
+        await axios.post('http://localhost:3000/api/orders', {}, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        });
+        
+        alert('結帳成功！感謝您的購買 🎉');
+        
+        // 清空前端的購物車狀態
+        this.items = []; 
+        
+        // 跳轉到歷史訂單頁面 (記得要去設定 Router)
+        router.push('/orders'); 
+
+      } catch (error) {
+        console.error('結帳失敗:', error);
+        alert('結帳失敗，請稍後再試');
+      }
     }
+    // 👆👆👆 新增結束 👆👆👆
   }
 });

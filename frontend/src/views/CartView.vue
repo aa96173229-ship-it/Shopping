@@ -41,7 +41,7 @@ const totalPrice = computed(() => {
 
       <div class="checkout-section">
         <h3>總金額: NT$ {{ totalPrice }}</h3>
-        <button class="btn-checkout">去結帳</button>
+        <button class="btn-checkout" @click="cartStore.checkout">去結帳</button>
       </div>
     </div>
   </div>

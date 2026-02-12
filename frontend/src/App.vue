@@ -39,14 +39,14 @@ const displayName = computed(() => {
         </router-link>
 
         <div v-if="authStore.token" class="user-info">
-          <span class="welcome-text">早上好，{{ displayName }}</span>
+          <router-link to="/orders" class="nav-item">我的訂單</router-link> <span class="welcome-text">早上好，{{ displayName }}</span>
           <button @click="handleLogout" class="btn-logout">登出</button>
         </div>
 
         <div v-else class="guest-info">
           <router-link to="/login" class="btn-login">登入 / 註冊</router-link>
         </div>
-        </div>
+      </div>
     </nav>
 
     <router-view />
