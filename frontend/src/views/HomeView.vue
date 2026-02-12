@@ -1,16 +1,22 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-import { useCartStore } from '../stores/cart'; // <--- 1. 引入購物車倉庫
+import { useCartStore } from '../stores/cart'; 
 
 const products = ref([]);
 const loading = ref(true);
-const cartStore = useCartStore(); // <--- 2. 啟用購物車功能
+const cartStore = useCartStore(); 
 
 onMounted(async () => {
   try {
     const response = await axios.get('http://localhost:3000/api/products');
-    products.value = response.data;
+    
+    // 👇 1. 資料加工：幫每個商品加上 quantity: 1
+    products.value = response.data.map(product => ({
+      ...product,
+      quantity: 1 
+    }));
+
   } catch (error) {
     console.error('抓取商品失敗:', error);
   } finally {
@@ -41,9 +47,26 @@ onMounted(async () => {
           
           <p class="price">NT$ {{ product.price }}</p>
 
-          <button class="btn-buy" @click.prevent="cartStore.addToCart(product.id)">
-            加入購物車
-          </button>
+          <div class="action-row">
+            
+            <div class="qty-control" @click.prevent>
+              <button 
+                @click="product.quantity > 1 ? product.quantity-- : null"
+                :disabled="product.quantity <= 1"
+              >-</button>
+              
+              <input type="number" v-model="product.quantity" readonly />
+              
+              <button 
+                @click="product.quantity < (product.stock || 99) ? product.quantity++ : null"
+                :disabled="product.quantity >= (product.stock || 99)"
+              >+</button>
+            </div>
+
+            <button class="btn-buy" @click.prevent="cartStore.addToCart(product.id, product.quantity)">
+              加入購物車
+            </button>
+          </div>
           </div>
       </div>
     </div>
@@ -98,10 +121,10 @@ h1 {
 .info {
   padding: 1rem;
   text-align: center;
-  display: flex;       /* 讓內容垂直排列 */
+  display: flex;
   flex-direction: column;
-  flex-grow: 1;        /* 撐開高度 */
-  justify-content: space-between; /* 上下對齊 */
+  flex-grow: 1;
+  justify-content: space-between; 
 }
 
 .title-link {
@@ -117,19 +140,84 @@ h1 {
   color: #e74c3c;
   font-weight: bold;
   font-size: 1.2rem;
-  margin: 0.5rem 0;
+  margin: 0.5rem 0 1rem 0; /* 增加下方間距 */
 }
 
+/* 👇 3. 新增與修改的樣式 👇 */
+
+/* 讓數量框與加入按鈕並排 */
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* 兩者之間的距離 */
+  margin-top: auto;
+}
+
+/* 數量選擇器的外框 */
+.qty-control {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f9f9f9;
+  overflow: hidden;
+}
+
+/* 加減按鈕 */
+.qty-control button {
+  width: 28px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: bold;
+  color: #555;
+  transition: background 0.2s;
+  padding: 0;
+}
+
+.qty-control button:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.qty-control button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+/* 數字輸入框 */
+.qty-control input {
+  width: 32px;
+  height: 32px;
+  border: none;
+  text-align: center;
+  font-size: 0.9rem;
+  background: transparent;
+  outline: none;
+  /* 移除預設箭頭 */
+  -moz-appearance: textfield;
+}
+.qty-control input::-webkit-outer-spin-button,
+.qty-control input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 修改加入按鈕：改為 flex: 1 填滿剩餘空間 */
 .btn-buy {
+  flex: 1; 
   background-color: #42b883;
   color: white;
   border: none;
-  padding: 0.8rem 1rem; /* 按鈕大一點比較好按 */
+  padding: 0; /* 高度交給 flex 自動對齊 */
+  height: 34px; /* 設定固定高度讓它跟左邊一樣高 */
   border-radius: 4px;
   cursor: pointer;
-  width: 100%;
-  font-size: 1rem;
+  font-size: 0.95rem;
   transition: background 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-buy:hover {
