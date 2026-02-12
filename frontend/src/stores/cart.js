@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
-import { useAuthStore } from './auth'; // 👈 1. 引入 Auth Store
-import router from '../router';         // 👈 2. 引入 Router 用來跳轉
+import { useAuthStore } from './auth';
+import router from '../router';
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
@@ -11,12 +11,10 @@ export const useCartStore = defineStore('cart', {
     // 取得購物車內容
     async fetchCart() {
       const authStore = useAuthStore();
-      // 如果沒登入，就不去後端要資料了，直接清空
       if (!authStore.token) {
         this.items = [];
         return;
       }
-
       try {
         const res = await axios.get('http://localhost:3000/api/cart/items', {
           headers: { Authorization: `Bearer ${authStore.token}` }
@@ -29,15 +27,12 @@ export const useCartStore = defineStore('cart', {
 
     // 加入購物車
     async addToCart(productId, quantity = 1) {
-      const authStore = useAuthStore(); 
-
-      // 守門員邏輯
+      const authStore = useAuthStore();
       if (!authStore.token) {
         alert('請先登入會員，才能加入購物車喔！');
-        router.push('/login'); 
-        return; 
+        router.push('/login');
+        return;
       }
-
       try {
         await axios.post('http://localhost:3000/api/cart/items', {
           productId,
@@ -47,43 +42,75 @@ export const useCartStore = defineStore('cart', {
         });
         
         alert('已加入購物車！');
-        this.fetchCart(); // 更新狀態
+        this.fetchCart();
       } catch (error) {
         console.error('加入失敗:', error);
-        alert('加入購物車失敗');
+        // 👇👇👇 修改重點：抓取後端回傳的具體錯誤訊息 (如：庫存不足) 👇👇👇
+        const errorMsg = error.response?.data?.message || '加入購物車失敗';
+        alert(errorMsg);
       }
     },
 
-    // 👇👇👇 新增：結帳功能 👇👇👇
+    // 更新數量
+    async updateQuantity(itemId, newQuantity) {
+      const authStore = useAuthStore();
+      if (newQuantity < 1) return; // 至少要有一個
+
+      try {
+        await axios.put(`http://localhost:3000/api/cart/items/${itemId}`, {
+          quantity: newQuantity
+        }, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        });
+        
+        // 更新成功後，重新抓取購物車資料
+        this.fetchCart();
+      } catch (error) {
+        console.error('更新數量失敗:', error);
+        // 👇👇👇 修改重點：顯示錯誤並強制重抓 (讓數字跳回原本合法的數量) 👇👇👇
+        const errorMsg = error.response?.data?.message || '更新失敗';
+        alert(errorMsg);
+        this.fetchCart(); // 重要！失敗時要把前端顯示的數字改回原本的
+      }
+    },
+
+    // 刪除商品
+    async removeItem(itemId) {
+      const authStore = useAuthStore();
+      if(!confirm('確定要移除這個商品嗎？')) return;
+
+      try {
+        await axios.delete(`http://localhost:3000/api/cart/items/${itemId}`, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        });
+        this.fetchCart();
+      } catch (error) {
+        console.error('刪除失敗:', error);
+        alert('刪除失敗');
+      }
+    },
+
+    // 結帳
     async checkout() {
       const authStore = useAuthStore();
-      
-      // 雙重保險：沒登入不能結帳
       if (!authStore.token) {
         alert('請先登入');
         router.push('/login');
         return;
       }
-
       try {
-        // 呼叫後端結帳 API (建立訂單、扣庫存、清空後端購物車)
         await axios.post('http://localhost:3000/api/orders', {}, {
           headers: { Authorization: `Bearer ${authStore.token}` }
         });
-        
         alert('結帳成功！感謝您的購買 🎉');
-        
-        // 清空前端的購物車狀態
-        this.items = []; 
-        
-        // 跳轉到歷史訂單頁面 (記得要去設定 Router)
-        router.push('/orders'); 
-
+        this.items = [];
+        router.push('/orders');
       } catch (error) {
         console.error('結帳失敗:', error);
-        alert('結帳失敗，請稍後再試');
+        // 👇👇👇 修改重點：顯示結帳失敗原因 👇👇👇
+        const errorMsg = error.response?.data?.message || '結帳失敗，請稍後再試';
+        alert(errorMsg);
       }
     }
-    // 👆👆👆 新增結束 👆👆👆
   }
 });

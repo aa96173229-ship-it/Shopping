@@ -4,12 +4,10 @@ import { useCartStore } from '../stores/cart';
 
 const cartStore = useCartStore();
 
-// 一進來就去後端拿資料
 onMounted(() => {
   cartStore.fetchCart();
 });
 
-// 計算總金額
 const totalPrice = computed(() => {
   return cartStore.items.reduce((total, item) => {
     return total + (item.Product.price * item.quantity);
@@ -22,7 +20,8 @@ const totalPrice = computed(() => {
     <h2>🛒 我的購物車</h2>
 
     <div v-if="cartStore.items.length === 0" class="empty-cart">
-      購物車是空的，快去買東西吧！
+      <p>購物車是空的，快去買東西吧！</p>
+      <router-link to="/" class="btn-go-shop">去逛逛</router-link>
     </div>
 
     <div v-else class="cart-list">
@@ -31,16 +30,26 @@ const totalPrice = computed(() => {
         
         <div class="item-info">
           <h3>{{ item.Product.title }}</h3>
-          <p>單價: ${{ item.Product.price }}</p>
-          <p>數量: {{ item.quantity }}</p>
+          <p class="unit-price">單價: ${{ item.Product.price }}</p>
+        </div>
+
+       <div class="quantity-control">
+          <button @click="cartStore.updateQuantity(item.id, item.quantity - 1)" :disabled="item.quantity <= 1">-</button>
+          <span>{{ item.quantity }}</span>
+          
+          <button 
+            @click="cartStore.updateQuantity(item.id, item.quantity + 1)"
+            :disabled="item.quantity >= item.Product.stock"
+          >+</button>
         </div>
         
-        <p class="item-total">小計: ${{ item.Product.price * item.quantity }}</p>
+        <p class="item-total">${{ item.Product.price * item.quantity }}</p>
 
-        </div>
+        <button class="btn-remove" @click="cartStore.removeItem(item.id)">×</button>
+      </div>
 
       <div class="checkout-section">
-        <h3>總金額: NT$ {{ totalPrice }}</h3>
+        <h3>總金額: <span class="total-price">NT$ {{ totalPrice }}</span></h3>
         <button class="btn-checkout" @click="cartStore.checkout">去結帳</button>
       </div>
     </div>
@@ -49,39 +58,138 @@ const totalPrice = computed(() => {
 
 <style scoped>
 .cart-container {
-  max-width: 800px;
+  max-width: 900px;
   margin: 2rem auto;
   padding: 1rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
+
+h2 {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 2rem;
+}
+
 .cart-item {
   display: flex;
   align-items: center;
   border-bottom: 1px solid #eee;
-  padding: 1rem 0;
-  gap: 1rem;
+  padding: 1.5rem 0;
+  gap: 1.5rem;
 }
+
 .item-img {
   width: 80px;
   height: 80px;
   object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #eee;
+}
+
+.item-info {
+  flex-grow: 1; /* 讓它佔據中間空間 */
+}
+
+.item-info h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+}
+
+.unit-price {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+/* 數量控制器樣式 */
+.quantity-control {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
   border-radius: 4px;
 }
-.item-info {
-  flex-grow: 1;
+
+.quantity-control button {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: #f8f9fa;
+  cursor: pointer;
+  font-weight: bold;
 }
+
+.quantity-control button:hover:not(:disabled) {
+  background: #e2e6ea;
+}
+
+.quantity-control span {
+  width: 40px;
+  text-align: center;
+  font-size: 1rem;
+}
+
 .item-total {
   font-weight: bold;
   color: #e74c3c;
+  width: 80px; /* 固定寬度讓排版整齊 */
+  text-align: right;
 }
+
+.btn-remove {
+  background: transparent;
+  border: none;
+  color: #ccc;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 10px;
+}
+
+.btn-remove:hover {
+  color: #e74c3c;
+}
+
+.checkout-section {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 2px solid #eee;
+  text-align: right;
+}
+
+.total-price {
+  color: #e74c3c;
+  font-size: 1.5rem;
+}
+
 .btn-checkout {
   background: #42b883;
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 30px;
   border-radius: 4px;
   margin-top: 1rem;
   cursor: pointer;
-  width: 100%;
   font-size: 1.2rem;
+  transition: background 0.3s;
+}
+
+.btn-checkout:hover {
+  background: #3aa876;
+}
+
+.empty-cart {
+  text-align: center;
+  padding: 3rem;
+  color: #888;
+}
+
+.btn-go-shop {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 10px 20px;
+  background: #2c3e50;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
 }
 </style>

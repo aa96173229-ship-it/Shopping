@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useCartStore } from '../stores/cart'; 
 
+// 這裡定義的是「全部商品 (複數)」
 const products = ref([]);
 const loading = ref(true);
 const cartStore = useCartStore(); 
@@ -11,9 +12,9 @@ onMounted(async () => {
   try {
     const response = await axios.get('http://localhost:3000/api/products');
     
-    // 👇 1. 資料加工：幫每個商品加上 quantity: 1
-    products.value = response.data.map(product => ({
-      ...product,
+    // 把資料塞進 products (複數)
+    products.value = response.data.map(p => ({
+      ...p,
       quantity: 1 
     }));
 
@@ -32,6 +33,7 @@ onMounted(async () => {
     <div v-if="loading" class="loading">正在搬運商品中...</div>
 
     <div v-else class="product-grid">
+      
       <div v-for="product in products" :key="product.id" class="product-card">
         
         <router-link :to="{ name: 'product', params: { id: product.id } }">
@@ -47,29 +49,37 @@ onMounted(async () => {
           
           <p class="price">NT$ {{ product.price }}</p>
 
+          <p v-if="product.stock > 0" class="stock-info">庫存剩餘: {{ product.stock }}</p>
+          <p v-else class="stock-info sold-out">🚫 已售完</p>
+
           <div class="action-row">
-            
             <div class="qty-control" @click.prevent>
               <button 
                 @click="product.quantity > 1 ? product.quantity-- : null"
-                :disabled="product.quantity <= 1"
+                :disabled="product.quantity <= 1 || product.stock === 0" 
               >-</button>
               
               <input type="number" v-model="product.quantity" readonly />
               
               <button 
-                @click="product.quantity < (product.stock || 99) ? product.quantity++ : null"
-                :disabled="product.quantity >= (product.stock || 99)"
+                @click="product.quantity < product.stock ? product.quantity++ : null"
+                :disabled="product.quantity >= product.stock || product.stock === 0"
               >+</button>
             </div>
 
-            <button class="btn-buy" @click.prevent="cartStore.addToCart(product.id, product.quantity)">
-              加入購物車
+            <button 
+              class="btn-buy" 
+              @click.prevent="cartStore.addToCart(product.id, product.quantity)"
+              :disabled="product.stock === 0"
+              :class="{ 'btn-disabled': product.stock === 0 }"
+            >
+              {{ product.stock === 0 ? '補貨中' : '加入購物車' }}
             </button>
           </div>
-          </div>
+        </div>
+      
+      </div> 
       </div>
-    </div>
   </main>
 </template>
 
@@ -140,20 +150,27 @@ h1 {
   color: #e74c3c;
   font-weight: bold;
   font-size: 1.2rem;
-  margin: 0.5rem 0 1rem 0; /* 增加下方間距 */
+  margin: 0.5rem 0 0.2rem 0;
 }
 
-/* 👇 3. 新增與修改的樣式 👇 */
+.stock-info {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 0.8rem;
+}
 
-/* 讓數量框與加入按鈕並排 */
+.sold-out {
+  color: red;
+  font-weight: bold;
+}
+
 .action-row {
   display: flex;
   align-items: center;
-  gap: 8px; /* 兩者之間的距離 */
+  gap: 8px; 
   margin-top: auto;
 }
 
-/* 數量選擇器的外框 */
 .qty-control {
   display: flex;
   align-items: center;
@@ -163,7 +180,6 @@ h1 {
   overflow: hidden;
 }
 
-/* 加減按鈕 */
 .qty-control button {
   width: 28px;
   height: 32px;
@@ -185,7 +201,6 @@ h1 {
   cursor: not-allowed;
 }
 
-/* 數字輸入框 */
 .qty-control input {
   width: 32px;
   height: 32px;
@@ -194,23 +209,16 @@ h1 {
   font-size: 0.9rem;
   background: transparent;
   outline: none;
-  /* 移除預設箭頭 */
   -moz-appearance: textfield;
 }
-.qty-control input::-webkit-outer-spin-button,
-.qty-control input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
 
-/* 修改加入按鈕：改為 flex: 1 填滿剩餘空間 */
 .btn-buy {
   flex: 1; 
   background-color: #42b883;
   color: white;
   border: none;
-  padding: 0; /* 高度交給 flex 自動對齊 */
-  height: 34px; /* 設定固定高度讓它跟左邊一樣高 */
+  padding: 0; 
+  height: 34px; 
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.95rem;
@@ -222,6 +230,15 @@ h1 {
 
 .btn-buy:hover {
   background-color: #3aa876;
+}
+
+.btn-disabled {
+  background-color: #ccc !important;
+  cursor: not-allowed;
+}
+
+.btn-disabled:hover {
+  background-color: #ccc !important;
 }
 
 .loading {
