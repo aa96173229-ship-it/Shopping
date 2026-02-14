@@ -9,8 +9,12 @@ const editingProduct = ref(null); // 目前正在編輯哪個商品
 
 // 取得商品列表
 const fetchProducts = async () => {
-  const res = await axios.get('http://localhost:3000/api/products');
-  products.value = res.data;
+  try {
+    const res = await axios.get('http://localhost:3000/api/products');
+    products.value = res.data;
+  } catch (error) {
+    console.error('無法取得商品列表');
+  }
 };
 
 // 刪除商品
@@ -45,18 +49,28 @@ const saveEdit = async () => {
   }
 };
 
-// 新增商品 (簡單版：只做個樣子，實務上會彈出 Modal)
+// 👇👇👇 修改：新增商品 (多問兩個問題：圖片和描述) 👇👇👇
 const createProduct = async () => {
   const title = prompt('請輸入商品名稱');
   if (!title) return;
-  const price = prompt('請輸入價格');
-  const stock = prompt('請輸入庫存');
   
+  const price = prompt('請輸入價格', '100');
+  const stock = prompt('請輸入庫存', '10');
+  
+  // 新增：詢問圖片網址 (預設給一張隨機圖，方便你不用每次都找圖)
+  const imageUrl = prompt('請輸入圖片網址 (或是直接按確定使用預設圖)', 'https://picsum.photos/300/200');
+  
+  // 新增：詢問描述
+  const description = prompt('請輸入商品描述', '這是一個很棒的新商品');
+
   try {
     await axios.post('http://localhost:3000/api/products', {
-      title, price, stock, 
-      imageUrl: 'https://via.placeholder.com/150', // 假圖
-      description: '新商品'
+      title, 
+      price, 
+      stock, 
+      // 如果使用者沒輸入，就用預設圖
+      imageUrl: imageUrl || 'https://via.placeholder.com/150', 
+      description
     }, {
       headers: { Authorization: `Bearer ${authStore.token}` }
     });
@@ -65,6 +79,7 @@ const createProduct = async () => {
     alert('新增失敗');
   }
 };
+// 👆👆👆 修改結束 👆👆👆
 
 onMounted(() => {
   fetchProducts();
@@ -78,9 +93,32 @@ onMounted(() => {
 
     <div v-if="editingProduct" class="edit-form">
       <h3>編輯商品: {{ editingProduct.title }}</h3>
-      <label>名稱: <input v-model="editingProduct.title" /></label>
-      <label>價格: <input v-model.number="editingProduct.price" type="number" /></label>
-      <label>庫存: <input v-model.number="editingProduct.stock" type="number" /></label>
+      
+      <div class="form-group">
+        <label>名稱:</label>
+        <input v-model="editingProduct.title" />
+      </div>
+
+      <div class="form-group">
+        <label>價格:</label>
+        <input v-model.number="editingProduct.price" type="number" />
+      </div>
+
+      <div class="form-group">
+        <label>庫存:</label>
+        <input v-model.number="editingProduct.stock" type="number" />
+      </div>
+
+      <div class="form-group">
+        <label>圖片網址:</label>
+        <input v-model="editingProduct.imageUrl" placeholder="https://..." />
+        <img :src="editingProduct.imageUrl" class="preview-img" />
+      </div>
+
+      <div class="form-group">
+        <label>描述:</label>
+        <textarea v-model="editingProduct.description"></textarea>
+      </div>
       <div class="form-actions">
         <button @click="saveEdit" class="btn-save">儲存</button>
         <button @click="editingProduct = null" class="btn-cancel">取消</button>
@@ -121,14 +159,19 @@ onMounted(() => {
 .product-table th, .product-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
 .thumb { width: 50px; height: 50px; object-fit: cover; }
 .low-stock { color: red; font-weight: bold; }
-.btn-create { background: #2c3e50; color: white; padding: 10px; margin-bottom: 1rem; cursor: pointer; }
-.btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; margin-right: 5px; cursor: pointer; }
-.btn-delete { background: #c0392b; color: white; border: none; padding: 5px 10px; cursor: pointer; }
 
-/* 編輯表單樣式 */
-.edit-form { background: #f9f9f9; padding: 1rem; border: 1px solid #ccc; margin-bottom: 1rem; }
-.edit-form label { display: block; margin-bottom: 0.5rem; }
-.edit-form input { padding: 5px; margin-left: 10px; }
-.btn-save { background: #27ae60; color: white; padding: 5px 15px; border: none; cursor: pointer; margin-right: 10px; }
-.btn-cancel { background: #95a5a6; color: white; padding: 5px 15px; border: none; cursor: pointer; }
+.btn-create { background: #2c3e50; color: white; padding: 10px; margin-bottom: 1rem; cursor: pointer; border: none; border-radius: 4px; font-size: 1rem;}
+.btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; margin-right: 5px; cursor: pointer; border-radius: 4px;}
+.btn-delete { background: #c0392b; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px;}
+
+/* 編輯表單樣式優化 */
+.edit-form { background: #f9f9f9; padding: 1.5rem; border: 1px solid #ddd; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+.form-group input, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+.preview-img { max-width: 100px; margin-top: 10px; border: 1px solid #ccc; }
+
+.form-actions { margin-top: 1.5rem; display: flex; gap: 10px; }
+.btn-save { background: #27ae60; color: white; padding: 8px 20px; border: none; cursor: pointer; border-radius: 4px; font-size: 1rem;}
+.btn-cancel { background: #95a5a6; color: white; padding: 8px 20px; border: none; cursor: pointer; border-radius: 4px; font-size: 1rem;}
 </style>
