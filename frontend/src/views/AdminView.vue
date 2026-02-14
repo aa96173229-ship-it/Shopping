@@ -10,7 +10,7 @@ const editingProduct = ref(null); // 目前正在編輯哪個商品
 // 取得商品列表
 const fetchProducts = async () => {
   try {
-    const res = await axios.get('http://localhost:3000/api/products');
+    const res = await axios.get('https://shopping-backend-mdvl.onrender.com/api/products');
     products.value = res.data;
   } catch (error) {
     console.error('無法取得商品列表');
@@ -21,7 +21,7 @@ const fetchProducts = async () => {
 const deleteProduct = async (id) => {
   if (!confirm('確定要下架這個商品嗎？')) return;
   try {
-    await axios.delete(`http://localhost:3000/api/products/${id}`, {
+    await axios.delete(`https://shopping-backend-mdvl.onrender.com/api/products/${id}`, {
       headers: { Authorization: `Bearer ${authStore.token}` }
     });
     fetchProducts(); // 重刷列表
@@ -38,7 +38,7 @@ const startEdit = (product) => {
 // 儲存編輯
 const saveEdit = async () => {
   try {
-    await axios.put(`http://localhost:3000/api/products/${editingProduct.value.id}`, editingProduct.value, {
+    await axios.put(`https://shopping-backend-mdvl.onrender.com/api/products/${editingProduct.value.id}`, editingProduct.value, {
       headers: { Authorization: `Bearer ${authStore.token}` }
     });
     alert('更新成功！');
@@ -64,7 +64,7 @@ const createProduct = async () => {
   const description = prompt('請輸入商品描述', '這是一個很棒的新商品');
 
   try {
-    await axios.post('http://localhost:3000/api/products', {
+    await axios.post('https://shopping-backend-mdvl.onrender.com/api/products', {
       title, 
       price, 
       stock, 

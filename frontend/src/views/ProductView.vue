@@ -29,7 +29,7 @@ const decrease = () => {
 onMounted(async () => {
   try {
     const productId = route.params.id;
-    const response = await axios.get(`http://localhost:3000/api/products/${productId}`);
+    const response = await axios.get(`https://shopping-backend-mdvl.onrender.com/api/products/${productId}`);
     product.value = response.data;
   } catch (error) {
     console.error('抓取商品失敗:', error);

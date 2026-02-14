@@ -10,7 +10,7 @@ const cartStore = useCartStore();
 
 onMounted(async () => {
   try {
-    const response = await axios.get('http://localhost:3000/api/products');
+    const response = await axios.get('https://shopping-backend-mdvl.onrender.com/api/products');
     
     // 把資料塞進 products (複數)
     products.value = response.data.map(p => ({

@@ -11,7 +11,7 @@ onMounted(async () => {
   if (!authStore.token) return;
   
   try {
-    const res = await axios.get('http://localhost:3000/api/orders', {
+    const res = await axios.get('https://shopping-backend-mdvl.onrender.com/api/orders', {
       headers: { Authorization: `Bearer ${authStore.token}` }
     });
     orders.value = res.data;

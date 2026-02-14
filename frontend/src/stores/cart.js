@@ -16,7 +16,7 @@ export const useCartStore = defineStore('cart', {
         return;
       }
       try {
-        const res = await axios.get('http://localhost:3000/api/cart/items', {
+        const res = await axios.get('https://shopping-backend-mdvl.onrender.com/api/cart/items', {
           headers: { Authorization: `Bearer ${authStore.token}` }
         });
         this.items = res.data;
@@ -34,7 +34,7 @@ export const useCartStore = defineStore('cart', {
         return;
       }
       try {
-        await axios.post('http://localhost:3000/api/cart/items', {
+        await axios.post('https://shopping-backend-mdvl.onrender.com/api/cart/items', {
           productId,
           quantity
         }, {
@@ -57,7 +57,7 @@ export const useCartStore = defineStore('cart', {
       if (newQuantity < 1) return; // 至少要有一個
 
       try {
-        await axios.put(`http://localhost:3000/api/cart/items/${itemId}`, {
+        await axios.put(`https://shopping-backend-mdvl.onrender.com/api/cart/items/${itemId}`, {
           quantity: newQuantity
         }, {
           headers: { Authorization: `Bearer ${authStore.token}` }
@@ -80,7 +80,7 @@ export const useCartStore = defineStore('cart', {
       if(!confirm('確定要移除這個商品嗎？')) return;
 
       try {
-        await axios.delete(`http://localhost:3000/api/cart/items/${itemId}`, {
+        await axios.delete(`https://shopping-backend-mdvl.onrender.com/api/cart/items/${itemId}`, {
           headers: { Authorization: `Bearer ${authStore.token}` }
         });
         this.fetchCart();
@@ -99,7 +99,7 @@ export const useCartStore = defineStore('cart', {
         return;
       }
       try {
-        await axios.post('http://localhost:3000/api/orders', {}, {
+        await axios.post('https://shopping-backend-mdvl.onrender.com/api/orders', {}, {
           headers: { Authorization: `Bearer ${authStore.token}` }
         });
         alert('結帳成功！感謝您的購買 🎉');

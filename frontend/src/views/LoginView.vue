@@ -18,7 +18,7 @@ const handleSubmit = async () => {
   try {
     if (isRegister.value) {
       // === 註冊模式 ===
-      await axios.post('http://localhost:3000/api/auth/register', {
+      await axios.post('https://shopping-backend-mdvl.onrender.com/api/auth/register', {
         username: username.value,
         email: email.value,
         password: password.value
@@ -27,7 +27,7 @@ const handleSubmit = async () => {
       isRegister.value = false; // 切換回登入頁
     } else {
       // === 登入模式 (這是我們剛剛寫的) ===
-      const res = await axios.post('http://localhost:3000/api/auth/login', {
+      const res = await axios.post('https://shopping-backend-mdvl.onrender.com/api/auth/login', {
         email: email.value,
         password: password.value
       });
