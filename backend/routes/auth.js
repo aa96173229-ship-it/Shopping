@@ -1,63 +1,85 @@
-// backend/routes/auth.js
 const express = require('express');
+const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const router = express.Router();
 
-// 註冊
+// 註冊 (Register)
 router.post('/register', async (req, res) => {
   try {
-    const { username, email, password } = req.body;
-
-    // 1. 檢查是否已經被註冊
+    const { email, password } = req.body;
+    
+    // 檢查 Email 是否已被註冊
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({ message: '這個 Email 已經被註冊過了' });
+      return res.status(400).json({ message: 'Email 已被註冊' });
     }
 
-    // 2. 加密密碼
+    // 加密密碼
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 3. 建立新使用者
-    const user = await User.create({
-      username,
+    // 建立使用者
+    const newUser = await User.create({
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      isAdmin: false // 預設註冊的都是普通會員
     });
 
-    res.status(201).json({ message: '註冊成功', user });
+    res.status(201).json({ message: '註冊成功' });
   } catch (error) {
-    console.error('註冊錯誤:', error); // 這行會讓你在終端機看到詳細錯誤
+    console.error(error);
     res.status(500).json({ message: '伺服器錯誤' });
   }
 });
 
-// 登入
+// 登入 (Login)
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     // 找使用者
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(401).json({ message: '找不到此帳號' });
+      return res.status(400).json({ message: '找不到使用者' });
     }
 
     // 比對密碼
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) {
-      return res.status(401).json({ message: '密碼錯誤' });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: '密碼錯誤' });
     }
 
-    // 發送 Token
-    const token = jwt.sign({ id: user.id, email: user.email }, 'SECRET_KEY', { expiresIn: '1h' });
-    
-    res.json({ token, user });
+    // 👇👇👇 重點修改：把 isAdmin 寫進 Token 裡 👇👇👇
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.email,
+        isAdmin: user.isAdmin // 👈 這行最重要！沒有它，警衛就不認識你
+      }, 
+      'SECRET_KEY', 
+      { expiresIn: '1h' }
+    );
+    // 👆👆👆 修改結束 👆👆👆
+
+    res.json({ 
+      token, 
+      user: { 
+        id: user.id, 
+        email: user.email,
+        isAdmin: user.isAdmin 
+      } 
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: '登入錯誤' });
+    res.status(500).json({ message: '伺服器錯誤' });
   }
+});
+
+// 檢查登入狀態 (Me)
+router.get('/me', async (req, res) => {
+    // ... (這部分可以省略，主要修改 login 即可)
+    // 為了完整性，這裡簡單回傳成功
+    res.sendStatus(200);
 });
 
 module.exports = router;

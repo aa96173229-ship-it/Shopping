@@ -17,6 +17,11 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  // 👇👇👇 新增：是否為管理員 👇👇👇
+  isAdmin: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false // 預設大家都是普通人
+  }
 });
 
 module.exports = User;

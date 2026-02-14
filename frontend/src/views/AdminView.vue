@@ -1,0 +1,134 @@
+<script setup>
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+import { useAuthStore } from '../stores/auth';
+
+const products = ref([]);
+const authStore = useAuthStore();
+const editingProduct = ref(null); // 目前正在編輯哪個商品
+
+// 取得商品列表
+const fetchProducts = async () => {
+  const res = await axios.get('http://localhost:3000/api/products');
+  products.value = res.data;
+};
+
+// 刪除商品
+const deleteProduct = async (id) => {
+  if (!confirm('確定要下架這個商品嗎？')) return;
+  try {
+    await axios.delete(`http://localhost:3000/api/products/${id}`, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
+    fetchProducts(); // 重刷列表
+  } catch (error) {
+    alert('刪除失敗 (權限不足?)');
+  }
+};
+
+// 開始編輯
+const startEdit = (product) => {
+  editingProduct.value = { ...product }; // 複製一份，避免直接改到畫面
+};
+
+// 儲存編輯
+const saveEdit = async () => {
+  try {
+    await axios.put(`http://localhost:3000/api/products/${editingProduct.value.id}`, editingProduct.value, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
+    alert('更新成功！');
+    editingProduct.value = null; // 關閉編輯框
+    fetchProducts();
+  } catch (error) {
+    alert('更新失敗');
+  }
+};
+
+// 新增商品 (簡單版：只做個樣子，實務上會彈出 Modal)
+const createProduct = async () => {
+  const title = prompt('請輸入商品名稱');
+  if (!title) return;
+  const price = prompt('請輸入價格');
+  const stock = prompt('請輸入庫存');
+  
+  try {
+    await axios.post('http://localhost:3000/api/products', {
+      title, price, stock, 
+      imageUrl: 'https://via.placeholder.com/150', // 假圖
+      description: '新商品'
+    }, {
+      headers: { Authorization: `Bearer ${authStore.token}` }
+    });
+    fetchProducts();
+  } catch (error) {
+    alert('新增失敗');
+  }
+};
+
+onMounted(() => {
+  fetchProducts();
+});
+</script>
+
+<template>
+  <div class="admin-container">
+    <h1>🔧 後台管理系統</h1>
+    <button class="btn-create" @click="createProduct">➕ 上架新商品</button>
+
+    <div v-if="editingProduct" class="edit-form">
+      <h3>編輯商品: {{ editingProduct.title }}</h3>
+      <label>名稱: <input v-model="editingProduct.title" /></label>
+      <label>價格: <input v-model.number="editingProduct.price" type="number" /></label>
+      <label>庫存: <input v-model.number="editingProduct.stock" type="number" /></label>
+      <div class="form-actions">
+        <button @click="saveEdit" class="btn-save">儲存</button>
+        <button @click="editingProduct = null" class="btn-cancel">取消</button>
+      </div>
+    </div>
+
+    <table class="product-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>圖片</th>
+          <th>名稱</th>
+          <th>價格</th>
+          <th>庫存</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="p in products" :key="p.id">
+          <td>{{ p.id }}</td>
+          <td><img :src="p.imageUrl" class="thumb" /></td>
+          <td>{{ p.title }}</td>
+          <td>${{ p.price }}</td>
+          <td :class="{ 'low-stock': p.stock < 5 }">{{ p.stock }}</td>
+          <td>
+            <button @click="startEdit(p)" class="btn-edit">編輯</button>
+            <button @click="deleteProduct(p.id)" class="btn-delete">下架</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<style scoped>
+.admin-container { padding: 2rem; max-width: 1000px; margin: 0 auto; }
+.product-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+.product-table th, .product-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+.thumb { width: 50px; height: 50px; object-fit: cover; }
+.low-stock { color: red; font-weight: bold; }
+.btn-create { background: #2c3e50; color: white; padding: 10px; margin-bottom: 1rem; cursor: pointer; }
+.btn-edit { background: #f39c12; color: white; border: none; padding: 5px 10px; margin-right: 5px; cursor: pointer; }
+.btn-delete { background: #c0392b; color: white; border: none; padding: 5px 10px; cursor: pointer; }
+
+/* 編輯表單樣式 */
+.edit-form { background: #f9f9f9; padding: 1rem; border: 1px solid #ccc; margin-bottom: 1rem; }
+.edit-form label { display: block; margin-bottom: 0.5rem; }
+.edit-form input { padding: 5px; margin-left: 10px; }
+.btn-save { background: #27ae60; color: white; padding: 5px 15px; border: none; cursor: pointer; margin-right: 10px; }
+.btn-cancel { background: #95a5a6; color: white; padding: 5px 15px; border: none; cursor: pointer; }
+</style>

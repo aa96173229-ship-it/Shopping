@@ -5,6 +5,7 @@ import ProductView from '../views/ProductView.vue'
 import CartView from '../views/CartView.vue'
 import OrderView from '../views/OrderView.vue' // 👈 1. 新增：引入訂單頁面
 import { useAuthStore } from '../stores/auth'
+import AdminView from '../views/AdminView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -53,8 +54,19 @@ const router = createRouter({
           next('/login'); // 沒登入，踢去登入頁
         }
       }
-    }
+    },
     // 👆👆👆 新增結束 👆👆👆
+    {
+      path: '/admin',
+      name: 'admin',
+      component: AdminView,
+      // 這裡應該要更嚴格檢查 isAdmin，但前端檢查只是防君子，後端才是防小人
+      beforeEnter: (to, from, next) => {
+        const authStore = useAuthStore();
+        if (authStore.token) next();
+        else next('/login');
+      } 
+    }
   ]
 })
 
