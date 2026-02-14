@@ -11,7 +11,7 @@ export const useAuthStore = defineStore('auth', {
     async login(email, password) {
       try {
         // 請確認這裡的網址是正確的 (開發用 localhost，上線用 Render)
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://shopping-backend-mdvl.onrender.com';
         
         const res = await axios.post(`${apiUrl}/api/auth/login`, {
           email,
