@@ -1,26 +1,26 @@
-// backend/models/User.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../db');
-const bcrypt = require('bcryptjs'); // 記得要安裝這個，如果沒安裝會報錯
 
 const User = sequelize.define('User', {
-  username: {
-    type: DataTypes.STRING,
-    allowNull: true, // 允許舊的使用者沒有名字
-  },
   email: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true, // ❌ 這就是 400 錯誤最常見的原因：Email 不能重複
+    unique: true
   },
   password: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: false
   },
-  // 👇👇👇 新增：是否為管理員 👇👇👇
+  // 👇👇👇 新增：暱稱欄位 👇👇👇
+  nickname: {
+    type: DataTypes.STRING,
+    allowNull: true, // 舊使用者沒有暱稱，所以允許為空
+    defaultValue: '新朋友' // 如果沒填，預設叫新朋友
+  },
+  // 👆👆👆 新增結束 👆👆👆
   isAdmin: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false // 預設大家都是普通人
+    defaultValue: false
   }
 });
 
