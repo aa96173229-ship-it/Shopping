@@ -1,46 +1,52 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
+// 👇👇👇 1. 統一設定 Render 網址 (我都幫你填好了) 👇👇👇
+const API_URL = 'https://shopping-backend-mdvl.onrender.com';
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    // 👇👇👇 修改：嘗試從瀏覽器讀取舊的使用者資料，以免重新整理後變空白 👇👇👇
     token: localStorage.getItem('token') || '',
     user: JSON.parse(localStorage.getItem('user')) || null, 
   }),
   actions: {
+    // --- 登入功能 ---
+    // ... 前面省略 ...
     async login(email, password) {
       try {
-        // 請確認這裡的網址是正確的 (開發用 localhost，上線用 Render)
-        const apiUrl = import.meta.env.VITE_API_URL || 'https://shopping-backend-mdvl.onrender.com';
+        const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
         
-        const res = await axios.post(`${apiUrl}/api/auth/login`, {
-          email,
-          password
-        });
-
-        // 1. 存 Token
+        // 確保這兩行有執行，名字才會存進 Pinia
         this.token = res.data.token;
-        localStorage.setItem('token', this.token);
-
-        // 2. 存使用者資料 (包含 nickname)
         this.user = res.data.user; 
-        localStorage.setItem('user', JSON.stringify(this.user)); // 👈 關鍵！存入 LocalStorage
+        
+        localStorage.setItem('token', this.token);
+        localStorage.setItem('user', JSON.stringify(this.user));
 
-        return true;
+        return { success: true }; 
       } catch (error) {
-        console.error('登入失敗', error);
-        alert(error.response?.data?.message || '登入失敗');
-        return false;
+        const msg = error.response?.data?.message || '登入失敗';
+        return { success: false, message: msg };
       }
     },
 
+    async register(email, password, nickname) {
+      try {
+        await axios.post(`${API_URL}/api/auth/register`, { email, password, nickname });
+        return { success: true };
+      } catch (error) {
+        const msg = error.response?.data?.message || '註冊失敗，請稍後再試';
+        return { success: false, message: msg }; // 👈 回傳原因
+      }
+    },
+// ... 後面省略 ...
+    // --- 👆👆👆 新增結束 👆👆👆 ---
+
     logout() {
-      // 清空所有資料
       this.token = '';
       this.user = null;
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      // 重新整理網頁，確保狀態清空
       window.location.reload(); 
     }
   }
