@@ -31,14 +31,19 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async register(email, password, nickname) {
-      try {
-        await axios.post(`${API_URL}/api/auth/register`, { email, password, nickname });
-        return { success: true };
-      } catch (error) {
-        const msg = error.response?.data?.message || '註冊失敗，請稍後再試';
-        return { success: false, message: msg }; // 👈 回傳原因
-      }
-    },
+  try {
+    const res = await axios.post(`${API_URL}/api/auth/register`, {
+      email,
+      password,
+      nickname
+    });
+    return { success: true };
+  } catch (error) {
+    // 這裡會把後端傳回來的 "所有欄位都必須填寫" 抓出來
+    const msg = error.response?.data?.message || '註冊失敗';
+    return { success: false, message: msg };
+  }
+},
 // ... 後面省略 ...
     // --- 👆👆👆 新增結束 👆👆👆 ---
 

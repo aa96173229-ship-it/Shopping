@@ -39,10 +39,14 @@ const displayName = computed(() => {
         </router-link>
 
         <div v-if="authStore.token" class="user-info">
-          <router-link to="/orders" class="nav-item">我的訂單</router-link> 
-         <span v-if="authStore.user" class="username">Hi, {{ authStore.user.nickname || authStore.user.email }} 👋</span>
-          <button @click="handleLogout" class="btn-logout">登出</button>
-        </div>
+  <router-link to="/orders" class="nav-item">我的訂單</router-link> 
+  
+  <span v-if="authStore.user" class="welcome-text">
+    {{ authStore.user.nickname || authStore.user.email.split('@')[0] }}(已登入)
+  </span>
+  
+  <button @click="handleLogout" class="btn-logout">登出</button>
+</div>
 
         <div v-else class="guest-info">
           <router-link to="/login" class="btn-login">登入 / 註冊</router-link>
