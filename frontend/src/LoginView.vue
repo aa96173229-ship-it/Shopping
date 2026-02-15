@@ -1,44 +1,49 @@
 <script setup>
-import { ref } from 'vue'
-import { useAuthStore } from '../stores/auth'
-import { useRouter } from 'vue-router' // 👈 1. 引入 router
+import { ref } from 'vue';
+import { useAuthStore } from '../stores/auth';
+import { useRouter } from 'vue-router';
 
-const authStore = useAuthStore()
-const router = useRouter() // 👈 2. 初始化 router
+const authStore = useAuthStore();
+const router = useRouter();
 
-const email = ref('')
-const password = ref('')
-const nickname = ref('') // 👈 3. 新增暱稱變數
-const isRegister = ref(false) // 我們統一用 isRegister
+const email = ref('');
+const password = ref('');
+const nickname = ref('');
+const isRegister = ref(false); // 預設為登入模式
+const errorMessage = ref(''); // 用來顯示錯誤訊息
 
 const toggleMode = () => {
-  isRegister.value = !isRegister.value
-  // 切換時順便清空輸入框，體驗更好
-  email.value = ''
-  password.value = ''
-  nickname.value = ''
-}
+  isRegister.value = !isRegister.value;
+  errorMessage.value = ''; // 切換模式時清空錯誤
+};
 
 const handleSubmit = async () => {
-  // 注意：這裡改用 !isRegister.value 代表「登入模式」
+  errorMessage.value = ''; // 每次送出前清空舊錯誤
+  
   if (!isRegister.value) {
     // --- 登入 ---
     const result = await authStore.login(email.value, password.value);
     if (result.success) {
-      alert('歡迎回來！🎉');
-      router.push('/'); // 現在可以跳轉了
+      alert('登入成功！🎉');
+      router.push('/');
     } else {
-      alert(`⚠️ 登入失敗：${result.message}`);
+      // 這裡會抓到 auth.js 回傳的 message
+      errorMessage.value = result.message; 
+      alert(`登入失敗：${result.message}`); // 雙重保險：跳窗也顯示
     }
   } else {
     // --- 註冊 ---
+    if (!nickname.value) {
+      errorMessage.value = '請填寫暱稱！';
+      return;
+    }
     const result = await authStore.register(email.value, password.value, nickname.value);
     if (result.success) {
-      alert('註冊成功！快去登入吧 ✨');
-      isRegister.value = false; // 註冊完自動切換到登入模式
-      password.value = '';
+      alert('註冊成功！請重新登入 ✨');
+      isRegister.value = false; // 自動切換回登入
     } else {
-      alert(`❌ 註冊失敗：${result.message}`);
+      errorMessage.value = result.message;
+      alert(`註冊失敗：${result.message}`);
     }
   }
 };
@@ -49,10 +54,14 @@ const handleSubmit = async () => {
     <div class="card">
       <h2>{{ isRegister ? '註冊新帳號' : '會員登入' }}</h2>
       
+      <div v-if="errorMessage" class="error-box">
+        {{ errorMessage }}
+      </div>
+
       <form @submit.prevent="handleSubmit">
         <div v-if="isRegister" class="form-group fade-in">
           <label>暱稱</label>
-          <input type="text" v-model="nickname" required placeholder="你想被怎麼稱呼？">
+          <input type="text" v-model="nickname" placeholder="你想被怎麼稱呼？">
         </div>
 
         <div class="form-group">
@@ -88,12 +97,17 @@ input { width: 100%; padding: 0.8rem; margin-top: 0.5rem; border: 1px solid #ddd
 .toggle-text { margin-top: 1rem; font-size: 0.9rem; color: #666; }
 .toggle-text span { color: #42b883; cursor: pointer; font-weight: bold; text-decoration: underline; }
 
-/* 讓切換時有一點點淡入效果 */
-.fade-in {
-  animation: fadeIn 0.3s ease-in;
+/* 🔴 錯誤訊息樣式 */
+.error-box {
+  background-color: #ffecec;
+  color: #ff4d4f;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  border: 1px solid #ffccc7;
+  font-size: 0.9rem;
 }
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+
+.fade-in { animation: fadeIn 0.3s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 </style>
