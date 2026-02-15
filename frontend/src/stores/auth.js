@@ -31,6 +31,8 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async register(email, password, nickname) {
+      // 👇👇👇 加入這一行 console.log 👇👇👇
+  console.log('🔥 正在嘗試連線到:', `${API_URL}/api/auth/register`);
   try {
     const res = await axios.post(`${API_URL}/api/auth/register`, {
       email,

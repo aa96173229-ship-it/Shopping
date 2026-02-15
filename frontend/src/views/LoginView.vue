@@ -23,7 +23,7 @@ const handleSubmit = async () => {
     try {
       // 這裡要記得改網址 (如果你已經上線，要用雲端網址，開發用 localhost)
       // 建議用 import.meta.env.VITE_API_URL
-      const apiUrl = 'http://localhost:3000'; // 或是你的 Render 網址
+      const apiUrl = 'https://shopping-backend-mdvl.onrender.com'; // 或是你的 Render 網址
       
       await axios.post(`${apiUrl}/api/auth/register`, {
         email: email.value,
