@@ -54,6 +54,37 @@ app.get('/', (req, res) => {
   res.send('Backend is running! Database URL is set.');
 });
 
+// 👇👇👇 新增這段「偵探路由」 👇👇👇
+app.get('/debug-db', async (req, res) => {
+  try {
+    // 1. 檢查資料庫連線類型
+    const dialect = sequelize.getDialect();
+    
+    // 2. 檢查 Users 表格裡有幾個人
+    const userCount = await User.count();
+    
+    // 3. 列出所有使用者 (只顯示 Email，不顯示密碼)
+    const allUsers = await User.findAll({
+      attributes: ['id', 'email', 'nickname', 'createdAt']
+    });
+
+    res.json({
+      status: "連線成功 ✅",
+      databaseType: dialect, // 這裡必須是 'postgres'
+      totalUsers: userCount,
+      users: allUsers,
+      envCheck: process.env.DATABASE_URL ? "有讀到變數" : "沒讀到變數"
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "連線失敗 ❌",
+      error: error.message,
+      detail: "請檢查 Render 環境變數設定"
+    });
+  }
+});
+// 👆👆👆 新增結束 👆👆👆
+
 // 👇 啟動伺服器與資料庫同步
 // alter: true 會自動更新資料表結構 (例如新增 nickname 欄位)
 sequelize.sync({ alter: true }).then(() => {

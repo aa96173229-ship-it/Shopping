@@ -1,27 +1,26 @@
+// backend/db.js
 const { Sequelize } = require('sequelize');
-const path = require('path');
+require('dotenv').config();
 
-let sequelize;
+// 👇 直接抓雲端網址，如果沒有抓到，就直接報錯 (不要用 SQLite)
+const dbUrl = process.env.DATABASE_URL;
 
-if (process.env.DATABASE_URL) {
-  // ☁️ 如果有雲端資料庫網址 (在 Render 上)
-  sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      }
-    },
-    logging: false
-  });
-} else {
-  // 🏠 如果在自己電腦上 (用 SQLite)
-  sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: path.join(__dirname, 'shop.sqlite'),
-    logging: false
-  });
+if (!dbUrl) {
+  console.error("❌ 嚴重錯誤：找不到 DATABASE_URL！程式無法啟動。");
+  process.exit(1); // 直接殺死程式，強迫你檢查 Render 設定
 }
+
+console.log("🔍 嘗試連線到資料庫...");
+
+const sequelize = new Sequelize(dbUrl, {
+  dialect: 'postgres',
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false // 這是 Neon 必備的設定
+    }
+  },
+  logging: false // 關閉囉嗦的日誌，只看重要的
+});
 
 module.exports = sequelize;
