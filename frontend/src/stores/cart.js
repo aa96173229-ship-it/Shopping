@@ -9,6 +9,17 @@ export const useCartStore = defineStore('cart', {
   state: () => ({
     items: [],
   }),
+  // 👇👇👇 請補上這一段 getters 👇👇👇
+  getters: {
+    totalPrice: (state) => {
+      return state.items.reduce((total, item) => {
+        // 雙重保險：處理大小寫
+        const product = item.Product || item.product;
+        const price = product?.price || 0;
+        return total + (price * item.quantity);
+      }, 0);
+    },
+  },
   actions: {
     // 取得購物車內容
     async fetchCart() {

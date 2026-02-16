@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Cart = require('../models/Cart');
-const Product = require('../models/Product'); // 👈 必須引入 Product 模型才能做關聯
+const Product = require('../models/Product');
 const authenticate = require('../middleware/auth'); 
 
 // ==============================
@@ -9,7 +9,6 @@ const authenticate = require('../middleware/auth');
 // ==============================
 router.get('/', authenticate, async (req, res) => {
   try {
-    // 這裡要注意：如果你的 auth 中間件解碼後是 id，就用 id
     const userId = req.user.userId || req.user.id; 
 
     const items = await Cart.findAll({
@@ -17,10 +16,10 @@ router.get('/', authenticate, async (req, res) => {
       include: [
         {
           model: Product,
-          attributes: ['title', 'price', 'imageUrl', 'stock'] // 👈 指定要抓的商品欄位
+          attributes: ['title', 'price', 'imageUrl', 'stock'] 
         }
       ],
-      order: [['createdAt', 'DESC']] // 讓最新的在上面
+      order: [['createdAt', 'DESC']]
     });
 
     res.json(items);
@@ -37,47 +36,53 @@ router.post('/', authenticate, async (req, res) => {
   try {
     const { productId, quantity } = req.body;
     const userId = req.user.userId || req.user.id;
-    const qty = parseInt(quantity); // 確保是數字
-
-    // 1. 先找商品，確認庫存
-    const product = await Product.findByPk(productId);
-    if (!product) return res.status(404).json({ message: '商品不存在' });
-
-    // 2. 找找看購物車是不是已經有這個商品
-    let cartItem = await Cart.findOne({ where: { userId, productId } });
     
-    // 計算預計總數量 (原本購物車有的 + 這次想加的)
-    const currentQty = cartItem ? cartItem.quantity : 0;
-    const totalQty = currentQty + qty;
+    // 💡 改良點 1: 確保加入的數量是數字
+    const addQty = parseInt(quantity); 
 
-    // 🛑 關鍵檢查：如果總數超過庫存，報錯！
-    if (totalQty > product.stock) {
-      return res.status(400).json({ message: `庫存不足！只剩 ${product.stock} 個` });
+    if (!productId || isNaN(addQty) || addQty < 1) {
+      return res.status(400).json({ message: '資料不正確' });
     }
 
-    // 3. 庫存夠，才準寫入
+    // 1. 找商品 (確認庫存)
+    const product = await Product.findByPk(productId);
+    if (!product) {
+      return res.status(404).json({ message: '商品不存在' });
+    }
+
+    // 2. 找購物車現有紀錄
+    let cartItem = await Cart.findOne({ where: { userId, productId } });
+
+    // 💡 改良點 2: 資料庫拿出來的數量也強制轉數字 (避免 5+5=55)
+    const currentQty = cartItem ? parseInt(cartItem.quantity) : 0;
+    
+    // 計算總數
+    const totalQty = currentQty + addQty;
+
+    // 🛑 庫存檢查 (使用 > 大於，所以剛好買光是可以的)
+    if (totalQty > product.stock) {
+      return res.status(400).json({ 
+        message: `庫存不足！庫存剩 ${product.stock}，您加購後總數為 ${totalQty}` 
+      });
+    }
+
+    // 3. 寫入資料庫
     if (cartItem) {
       cartItem.quantity = totalQty;
       await cartItem.save();
     } else {
-      cartItem = await Cart.create({ userId, productId, quantity: qty });
+      await Cart.create({
+        userId,
+        productId,
+        quantity: addQty
+      });
     }
 
-    if (!productId) {
-      return res.status(400).json({ message: '缺少商品 ID' });
-    }
+    res.status(201).json({ message: '加入成功', currentQuantity: totalQty });
 
-    let item = await Cart.findOne({ where: { userId, productId } });
-
-    if (item) {
-      item.quantity += parseInt(quantity);
-      await item.save();
-    } else {
-      item = await Cart.create({ userId, productId, quantity });
-    }
-    res.status(201).json(item);
   } catch (error) {
-    res.status(500).json({ message: '伺服器錯誤', detail: error.message });
+    console.error('加入購物車失敗:', error);
+    res.status(500).json({ message: '伺服器錯誤' });
   }
 });
 
@@ -99,26 +104,34 @@ router.delete('/:id', authenticate, async (req, res) => {
   }
 });
 
+// ==============================
 // 🟡 更新數量 (PUT /api/cart/:id)
+// ==============================
 router.put('/:id', authenticate, async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
-    const { quantity } = req.body;
+    // 💡 改良點 3: 更新時也要確保是數字
+    const newQty = parseInt(req.body.quantity);
     
-    // 找到該購物車項目，並連同商品資料一起抓出來 (為了看 stock)
+    if (isNaN(newQty) || newQty < 1) {
+        return res.status(400).json({ message: '數量不正確' });
+    }
+
     const cartItem = await Cart.findOne({ 
       where: { id: req.params.id, userId },
-      include: [Product] // 👈 必須 include Product 才能查庫存
+      include: [Product]
     });
 
     if (!cartItem) return res.status(404).json({ message: '找不到該項目' });
 
-    // 🛑 關鍵檢查
-    if (quantity > cartItem.Product.stock) {
-      return res.status(400).json({ message: `庫存不足，無法修改數量！最大庫存為 ${cartItem.Product.stock}` });
+    // 🛑 庫存檢查
+    if (newQty > cartItem.Product.stock) {
+      return res.status(400).json({ 
+        message: `庫存不足，無法修改數量！最大庫存為 ${cartItem.Product.stock}` 
+      });
     }
 
-    cartItem.quantity = quantity;
+    cartItem.quantity = newQty;
     await cartItem.save();
     
     res.json(cartItem);

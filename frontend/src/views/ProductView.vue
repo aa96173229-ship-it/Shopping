@@ -8,13 +8,12 @@ const route = useRoute();
 const cartStore = useCartStore();
 const product = ref(null);
 const loading = ref(true);
-
-// 👇 新增：用來記住使用者現在選了幾個，預設是 1
 const quantity = ref(1);
 
-// 👇 新增：數量控制函式
+// 👇 1. 新增一個開關，預設是 false (沒在忙)
+const isProcessing = ref(false);
+
 const increase = () => {
-  // 如果有庫存限制，可以在這裡擋
   if (product.value && quantity.value < product.value.stock) {
     quantity.value++;
   }
@@ -23,6 +22,31 @@ const increase = () => {
 const decrease = () => {
   if (quantity.value > 1) {
     quantity.value--;
+  }
+};
+
+// 👇 2. 修改後的「防手抖」函式 (加上強制延遲)
+const handleAddToCart = async () => {
+  // 👇 1. 印出目前的狀態
+  console.log('按鈕被按下了！目前鎖的狀態:', isProcessing.value);
+
+  if (isProcessing.value) {
+    console.log('🚫 門是鎖著的，擋掉重複點擊！');
+    return;
+  }
+
+  isProcessing.value = true;
+  console.log('🔒 上鎖！準備發送請求...');
+
+  try {
+    await cartStore.addToCart(product.value.id, quantity.value);
+    console.log('✅ 請求完成！');
+  } finally {
+    // 強制延遲解鎖
+    setTimeout(() => {
+      isProcessing.value = false;
+      console.log('🔓 解鎖！現在可以再按了');
+    }, 500); 
   }
 };
 
@@ -65,8 +89,12 @@ onMounted(async () => {
             <button @click="increase" :disabled="quantity >= product.stock">+</button>
           </div>
 
-          <button class="btn-add" @click="cartStore.addToCart(product.id, quantity)">
-            加入購物車 ({{ quantity }})
+          <button 
+            class="btn-add" 
+            @click.prevent="handleAddToCart" 
+            :disabled="isProcessing || product.stock === 0"
+          >
+            {{ isProcessing ? '加入中...' : (product.stock === 0 ? '已售完' : `加入購物車 (${quantity})`) }}
           </button>
         </div>
         <div style="margin-top: 1rem;">
@@ -216,5 +244,12 @@ onMounted(async () => {
   font-size: 1.5rem;
   margin-top: 3rem;
   color: #888;
+}
+
+/* 👇 新增樣式：當按鈕被 disabled (加入中) 的時候變灰色 */
+.btn-add:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  transform: none; /* 取消原本可能的點擊特效 */
 }
 </style>
