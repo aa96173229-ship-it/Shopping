@@ -37,14 +37,23 @@ const totalPrice = computed(() => {
         </div>
 
         <div class="quantity-control">
-          <button @click="cartStore.updateQuantity(item.id, item.quantity - 1)" :disabled="item.quantity <= 1">-</button>
-          
-          <span>{{ item.quantity }}</span>
-          
-          <button @click="cartStore.updateQuantity(item.id, item.quantity + 1)">+</button>
-        </div>
-        
-        <p class="item-total">NT$ {{ (item.Product?.price || 0) * item.quantity }}</p>
+  <button 
+    @click="cartStore.updateQuantity(item.id, item.quantity - 1)" 
+    :disabled="item.quantity <= 1"
+  >-</button>
+  
+  <span>{{ item.quantity }}</span>
+  
+  <button 
+    @click="cartStore.updateQuantity(item.id, item.quantity + 1)"
+    :disabled="item.quantity >= (item.Product?.stock || 999)"
+    :title="item.quantity >= item.Product?.stock ? '已達庫存上限' : ''"
+  >+</button>
+</div>
+
+<p v-if="item.quantity >= item.Product?.stock" style="color: red; font-size: 12px; margin-top: 5px;">
+  已達庫存上限 (剩餘 {{ item.Product?.stock }} 個)
+</p>
 
         <button class="btn-remove" @click="cartStore.removeItem(item.id)">×</button>
       </div>

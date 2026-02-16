@@ -91,6 +91,41 @@ export const useCartStore = defineStore('cart', {
         console.error('刪除失敗:', error);
         alert('刪除失敗');
       }
-    }
+    },
+
+    // 👇👇👇 請補上這一段 👇👇👇
+    async checkout() {
+      const authStore = useAuthStore();
+      
+      if (this.items.length === 0) {
+        alert('購物車是空的，無法結帳！');
+        return;
+      }
+
+      // 二次確認 (怕誤按)
+      if (!confirm(`確定要結帳嗎？總金額: NT$ ${this.totalPrice || '計算中'}`)) {
+        return;
+      }
+
+      try {
+        // 發送結帳請求給後端 (注意：這裡不需要傳 cartItems，後端會自己去資料庫抓)
+        await axios.post('https://shopping-backend-mdvl.onrender.com/api/orders', {}, {
+          headers: { Authorization: `Bearer ${authStore.token}` }
+        });
+        
+        alert('🎉 結帳成功！');
+        
+        // 1. 清空前端購物車狀態
+        this.items = [];
+        
+        // 2. 導向到歷史訂單頁面
+        router.push('/orders'); 
+
+      } catch (error) {
+        console.error('結帳失敗:', error);
+        const errorMsg = error.response?.data?.message || '結帳發生錯誤，請稍後再試';
+        alert(`❌ 結帳失敗: ${errorMsg}`);
+      }
+    },
   }
 });
