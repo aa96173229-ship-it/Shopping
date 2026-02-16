@@ -20,21 +20,26 @@ const orderRoutes = require('./routes/orders');
 // ==============================
 // 👇 設定資料庫關聯 (簡化版)
 // ==============================
-// 使用者與購物車：一對多 (一個使用者可以有多筆購物車記錄)
-User.hasMany(Cart);
-Cart.belongsTo(User);
+// 1. 使用者與購物車
+User.hasMany(Cart, { foreignKey: 'userId' });
+Cart.belongsTo(User, { foreignKey: 'userId' });
 
-// 商品與購物車：一對多
-Product.hasMany(Cart);
-Cart.belongsTo(Product);
+// 2. 商品與購物車 (關鍵修正！)
+Product.hasMany(Cart, { foreignKey: 'productId' });
+Cart.belongsTo(Product, { foreignKey: 'productId' });
 
-// 訂單部分維持不變
-User.hasMany(Order);
-Order.belongsTo(User);
-Order.hasMany(OrderItem);
-OrderItem.belongsTo(Order);
-Product.hasMany(OrderItem);
-OrderItem.belongsTo(Product);
+// 3. 訂單系統
+User.hasMany(Order, { foreignKey: 'userId' });
+Order.belongsTo(User, { foreignKey: 'userId' });
+
+Order.hasMany(OrderItem, { foreignKey: 'orderId' });
+OrderItem.belongsTo(Order, { foreignKey: 'orderId' });
+
+// 4. 訂單與商品 (關鍵修正！)
+Product.hasMany(OrderItem, { foreignKey: 'productId' });
+OrderItem.belongsTo(Product, { foreignKey: 'productId' });
+
+// 👆👆👆 覆蓋結束 👆👆👆
 
 const app = express();
 const port = process.env.PORT || 3000;

@@ -11,8 +11,9 @@ onMounted(() => {
 // ✅ 修正：加上 ?. 避免資料還沒抓到時報錯導致白屏
 const totalPrice = computed(() => {
   return cartStore.items.reduce((total, item) => {
-    // 使用可選鏈運算子 ?. 確保 Product 存在
-    const price = item.Product?.price || 0;
+    // 💡 雙重保險：不管後端給 Product 還是 product，我都抓！
+    const product = item.Product || item.product; 
+    const price = product?.price || 0;
     return total + (price * item.quantity);
   }, 0);
 });
@@ -21,7 +22,7 @@ const totalPrice = computed(() => {
 <template>
   <div class="cart-container">
     <h2>🛒 我的購物車</h2>
-
+    <pre style="background: #eee; padding: 10px;">{{ cartStore.items }}</pre>
     <div v-if="cartStore.items.length === 0" class="empty-cart">
       <p>購物車是空的，快去買東西吧！</p>
       <router-link to="/" class="btn-go-shop">去逛逛</router-link>
