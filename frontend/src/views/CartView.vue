@@ -22,7 +22,6 @@ const totalPrice = computed(() => {
 <template>
   <div class="cart-container">
     <h2>🛒 我的購物車</h2>
-    <pre style="background: #eee; padding: 10px;">{{ cartStore.items }}</pre>
     <div v-if="cartStore.items.length === 0" class="empty-cart">
       <p>購物車是空的，快去買東西吧！</p>
       <router-link to="/" class="btn-go-shop">去逛逛</router-link>
