@@ -4,16 +4,19 @@ const Order = require('../models/Order');
 const OrderItem = require('../models/OrderItem');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
-const authenticate = require('../middleware/auth'); // 👈 改用統一的 middleware
+const User = require('../models/User'); // 👈 1. 補上這行！不然找不到 User 表
+const authenticate = require('../middleware/auth');
 
 // ==============================
 // 1. 結帳 (Create Order)
 // ==============================
 router.post('/', authenticate, async (req, res) => {
   try {
+    // 取得使用者 ID 和 前端傳來的 useCoins (是否使用金幣)
     const userId = req.user.userId || req.user.id;
+    const { useCoins } = req.body; 
 
-    // A. 直接找該用戶購物車裡的所有商品 (單層結構)
+    // A. 找購物車
     const cartItems = await Cart.findAll({
       where: { userId },
       include: [Product]
@@ -23,82 +26,78 @@ router.post('/', authenticate, async (req, res) => {
       return res.status(400).json({ message: '購物車是空的，無法結帳' });
     }
 
-    // B. 計算總金額
-    let totalAmount = 0;
+    // B. 計算原始總金額
+    let originalAmount = 0;
     cartItems.forEach(item => {
-      // 防呆：如果商品被刪了，價格算 0
       const price = item.Product ? item.Product.price : 0;
-      totalAmount += price * item.quantity;
+      originalAmount += price * item.quantity;
     });
 
-    // C. 建立訂單本體 (Order)
+    // ==========================================
+    // C. 💰 金幣抵扣邏輯 (必須在建立訂單前做)
+    // ==========================================
+    let finalAmount = originalAmount;
+    let usedCoins = 0; // 紀錄這次用了多少金幣
+
+    // 取得使用者最新資料 (確認金幣夠不夠)
+    const user = await User.findByPk(userId);
+
+    if (useCoins && user && user.coins > 0) {
+      // 規則：金幣 1 元 = 台幣 1 元
+      if (user.coins >= originalAmount) {
+        // 金幣超級多，全額折抵 (免費)
+        usedCoins = originalAmount;
+        finalAmount = 0;
+      } else {
+        // 金幣不夠付，部分折抵
+        usedCoins = user.coins;
+        finalAmount = originalAmount - user.coins;
+      }
+
+      // 扣除使用者金幣並存檔
+      user.coins -= usedCoins;
+      await user.save();
+    }
+    // ==========================================
+
+    // D. 建立訂單 (寫入折抵後的金額)
     const newOrder = await Order.create({
-      userId: userId, // 注意大小寫，對應 server.js 的 foreignKey
-      totalAmount: totalAmount,
+      userId: userId,
+      totalAmount: finalAmount, // 👈 這裡存的是「實際付款金額」
       status: 'completed'
     });
 
-    // D. 建立訂單詳情 (OrderItems) 並扣庫存
+    // E. 建立訂單詳情 & 扣商品庫存
     for (const item of cartItems) {
-      if (!item.Product) continue; // 商品不存在就跳過
+      if (!item.Product) continue;
 
-      // 建立詳情
       await OrderItem.create({
-        orderId: newOrder.id,      // 對應 foreignKey: 'orderId'
-        productId: item.productId, // 對應 foreignKey: 'productId'
+        orderId: newOrder.id,
+        productId: item.productId,
         quantity: item.quantity,
         price: item.Product.price
       });
 
-      // 扣庫存
+      // 扣商品庫存
       const product = await Product.findByPk(item.productId);
       if (product) {
-        // 簡單扣除，若要嚴謹可加庫存檢查
         product.stock = Math.max(0, product.stock - item.quantity);
         await product.save();
       }
     }
 
-    // E. 清空購物車 (直接刪除該用戶在 Carts 表的所有紀錄)
+    // F. 清空購物車
     await Cart.destroy({ where: { userId } });
 
-    res.json({ message: '訂單建立成功', orderId: newOrder.id });
-
-    const userId = req.user.id;
-    // 👇 前端要傳 useCoins: true 來決定要不要用
-    const { useCoins } = req.body; 
-
-    const user = await User.findByPk(userId);
-    
-    // ... (原本計算 cartItems 總金額的邏輯) ...
-    // 假設算出來 totalAmount = 1000
-    
-    let finalAmount = totalAmount;
-    let usedCoins = 0;
-
-    // 💰 金幣抵扣邏輯
-    if (useCoins && user.coins > 0) {
-      // 規則：最多折抵總金額的 50% (看你想不想設限制)
-      // 或是直接全抵
-      
-      if (user.coins >= totalAmount) {
-        // 金幣比訂單貴 (全額折抵)
-        usedCoins = totalAmount;
-        finalAmount = 0; 
-      } else {
-        // 金幣不夠付 (部分折抵)
-        usedCoins = user.coins;
-        finalAmount = totalAmount - user.coins;
-      }
-      
-      // 扣除使用者金幣
-      user.coins -= usedCoins;
-      await user.save();
-    }
-
-    // ... (接著建立 Order，記得把 finalAmount 寫入資料庫) ...
-
-    res.json({ message: '結帳成功', finalAmount, usedCoins });
+    // G. 回傳成功訊息 (包含剩餘金幣，讓前端更新)
+    res.json({ 
+      message: '結帳成功', 
+      orderId: newOrder.id,
+      originalAmount,
+      discount: usedCoins,
+      finalAmount,
+      remainingCoins: user ? user.coins : 0
+    });
 
   } catch (error) {
     console.error('結帳失敗:', error);
@@ -107,7 +106,7 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // ==============================
-// 2. 查詢歷史訂單 (Get User Orders)
+// 2. 查詢歷史訂單
 // ==============================
 router.get('/', authenticate, async (req, res) => {
   try {
@@ -118,10 +117,10 @@ router.get('/', authenticate, async (req, res) => {
       include: [
         {
           model: OrderItem,
-          include: [Product] // 這樣才能看到買了什麼商品的圖片和名稱
+          include: [Product]
         }
       ],
-      order: [['createdAt', 'DESC']] // 最新的訂單排上面
+      order: [['createdAt', 'DESC']]
     });
     res.json(orders);
   } catch (error) {
