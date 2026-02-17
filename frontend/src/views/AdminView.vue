@@ -137,8 +137,8 @@ onMounted(() => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="p in products" :key="p.id">
-          <td>{{ p.id }}</td>
+        <tr v-for="(p,index) in products" :key="p.id">
+          <td>{{ index + 1 }}</td>
           <td><img :src="p.imageUrl" class="thumb" /></td>
           <td>{{ p.title }}</td>
           <td>${{ p.price }}</td>
