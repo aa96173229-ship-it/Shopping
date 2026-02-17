@@ -4,10 +4,10 @@ const cors = require('cors');
 const sequelize = require('./db');
 const path = require('path');
 
-// 引入模型 (簡化購物車結構)
+// 引入模型
 const User = require('./models/User');
 const Product = require('./models/Product');
-const Cart = require('./models/Cart'); // 我們將改用這個作為單層購物車
+const Cart = require('./models/Cart');
 const Order = require('./models/Order');
 const OrderItem = require('./models/OrderItem');
 
@@ -16,35 +16,29 @@ const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart');
 const orderRoutes = require('./routes/orders');
+const userRoutes = require('./routes/user'); // 👈 1. 補上這行！引入簽到路由
 
 // ==============================
-// 👇 設定資料庫關聯 (簡化版)
+// 資料庫關聯設定
 // ==============================
-// 1. 使用者與購物車
 User.hasMany(Cart, { foreignKey: 'userId' });
 Cart.belongsTo(User, { foreignKey: 'userId' });
 
-// 2. 商品與購物車 (關鍵修正！)
 Product.hasMany(Cart, { foreignKey: 'productId' });
 Cart.belongsTo(Product, { foreignKey: 'productId' });
 
-// 3. 訂單系統
 User.hasMany(Order, { foreignKey: 'userId' });
 Order.belongsTo(User, { foreignKey: 'userId' });
 
 Order.hasMany(OrderItem, { foreignKey: 'orderId' });
 OrderItem.belongsTo(Order, { foreignKey: 'orderId' });
 
-// 4. 訂單與商品 (關鍵修正！)
 Product.hasMany(OrderItem, { foreignKey: 'productId' });
 OrderItem.belongsTo(Product, { foreignKey: 'productId' });
-
-// 👆👆👆 覆蓋結束 👆👆👆
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// 中介軟體設定
 app.use(cors()); 
 app.use(express.json()); 
 
@@ -53,22 +47,22 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/user', userRoutes); // 👈 2. 補上這行！讓 /api/user/checkin 生效
 
 // 靜態檔案
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
-// 首頁測試路由
 app.get('/', (req, res) => {
   res.send('Backend is running! Shopping Cart is simplified.');
 });
 
-// 偵探路由 (Debug)
+// Debug 路由
 app.get('/debug-db', async (req, res) => {
   try {
     const dialect = sequelize.getDialect();
     const userCount = await User.count();
     const allUsers = await User.findAll({
-      attributes: ['id', 'email', 'nickname', 'isAdmin', 'createdAt']
+      attributes: ['id', 'email', 'nickname', 'isAdmin', 'createdAt', 'coins'] // 順便檢查 coins
     });
 
     res.json({
@@ -82,8 +76,9 @@ app.get('/debug-db', async (req, res) => {
   }
 });
 
-// 啟動伺服器並同步資料庫
-// alter: true 會根據 model 自動在 Neon 建立/修改表格欄位
+// 啟動伺服器
+// 💡 因為你有寫 alter: true，等一下 Push 上去重啟後
+// 程式會自動幫你在 Neon 資料庫新增 coins 和 lastCheckInDate 欄位！
 sequelize.sync({ alter: true }).then(() => {
   console.log('✅ 資料庫同步完成');
   app.listen(port, () => {
