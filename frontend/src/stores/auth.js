@@ -10,6 +10,23 @@ export const useAuthStore = defineStore('auth', {
     user: JSON.parse(localStorage.getItem('user')) || null, 
   }),
   actions: {
+    // 每日簽到
+    async dailyCheckIn() {
+        try {
+            const res = await axios.post(`${API_URL}/user/checkin`, {}, {
+                headers: { Authorization: `Bearer ${this.token}` }
+            });
+            
+            // 更新本地的金幣顯示
+            this.user.coins = res.data.coins;
+            // 同步更新 LocalStorage
+            localStorage.setItem('user', JSON.stringify(this.user));
+            
+            alert(res.data.message); // "簽到成功！獲得 $20 金幣"
+        } catch (error) {
+            alert(error.response?.data?.message || '簽到失敗');
+        }
+    },
     // --- 登入功能 ---
     // ... 前面省略 ...
     async login(email, password) {

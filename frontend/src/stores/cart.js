@@ -105,7 +105,7 @@ export const useCartStore = defineStore('cart', {
     },
 
     // 👇👇👇 請補上這一段 👇👇👇
-    async checkout() {
+    async checkout(payload = {}) {
       const authStore = useAuthStore();
       
       if (this.items.length === 0) {
@@ -113,23 +113,24 @@ export const useCartStore = defineStore('cart', {
         return;
       }
 
-      // 二次確認 (怕誤按)
-      if (!confirm(`確定要結帳嗎？總金額: NT$ ${this.totalPrice || '計算中'}`)) {
+      // 二次確認
+      if (!confirm(`確定要結帳嗎？總金額: NT$ ${this.totalPrice}`)) {
         return;
       }
 
       try {
-        // 發送結帳請求給後端 (注意：這裡不需要傳 cartItems，後端會自己去資料庫抓)
-        await axios.post('https://shopping-backend-mdvl.onrender.com/api/orders', {}, {
+        // 2. 修正：把 payload (裡面包含 { useCoins: true }) 傳給後端
+        // 原本你是寫 {}，這樣後端永遠收不到折抵請求
+        await axios.post('https://shopping-backend-mdvl.onrender.com/api/orders', payload, {
           headers: { Authorization: `Bearer ${authStore.token}` }
         });
         
         alert('🎉 結帳成功！');
         
-        // 1. 清空前端購物車狀態
+        // 清空購物車
         this.items = [];
         
-        // 2. 導向到歷史訂單頁面
+        // 導向
         router.push('/orders'); 
 
       } catch (error) {

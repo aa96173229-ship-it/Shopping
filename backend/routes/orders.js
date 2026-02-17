@@ -64,6 +64,42 @@ router.post('/', authenticate, async (req, res) => {
 
     res.json({ message: '訂單建立成功', orderId: newOrder.id });
 
+    const userId = req.user.id;
+    // 👇 前端要傳 useCoins: true 來決定要不要用
+    const { useCoins } = req.body; 
+
+    const user = await User.findByPk(userId);
+    
+    // ... (原本計算 cartItems 總金額的邏輯) ...
+    // 假設算出來 totalAmount = 1000
+    
+    let finalAmount = totalAmount;
+    let usedCoins = 0;
+
+    // 💰 金幣抵扣邏輯
+    if (useCoins && user.coins > 0) {
+      // 規則：最多折抵總金額的 50% (看你想不想設限制)
+      // 或是直接全抵
+      
+      if (user.coins >= totalAmount) {
+        // 金幣比訂單貴 (全額折抵)
+        usedCoins = totalAmount;
+        finalAmount = 0; 
+      } else {
+        // 金幣不夠付 (部分折抵)
+        usedCoins = user.coins;
+        finalAmount = totalAmount - user.coins;
+      }
+      
+      // 扣除使用者金幣
+      user.coins -= usedCoins;
+      await user.save();
+    }
+
+    // ... (接著建立 Order，記得把 finalAmount 寫入資料庫) ...
+
+    res.json({ message: '結帳成功', finalAmount, usedCoins });
+
   } catch (error) {
     console.error('結帳失敗:', error);
     res.status(500).json({ message: '結帳失敗', error: error.message });

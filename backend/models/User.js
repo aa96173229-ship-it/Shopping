@@ -21,6 +21,16 @@ const User = sequelize.define('User', {
   isAdmin: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  // 👇 新增這兩個欄位 👇
+  coins: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,      // 預設 0 元
+    allowNull: false
+  },
+  lastCheckInDate: {
+    type: DataTypes.STRING, // 存 "2024-02-17" 這種格式比較好比對
+    allowNull: true
   }
 });
 

@@ -31,6 +31,24 @@ const displayName = computed(() => {
   }
   return '';
 });
+
+// 👇 新增：判斷今天是否已經簽到過
+const hasCheckedInToday = computed(() => {
+  if (!authStore.user?.lastCheckInDate) return false;
+  // 取得今天的日期字串 (YYYY-MM-DD)
+  const today = new Date().toISOString().split('T')[0];
+  return authStore.user.lastCheckInDate === today;
+});
+
+// 👇 新增：處理簽到點擊
+const handleCheckIn = async () => {
+  // 呼叫 Store 裡的簽到功能
+  if (authStore.dailyCheckIn) {
+    await authStore.dailyCheckIn();
+  } else {
+    alert('請確認 stores/auth.js 是否已新增 dailyCheckIn 功能');
+  }
+};
 </script>
 
 <template>
@@ -42,6 +60,7 @@ const displayName = computed(() => {
 
       <div v-if="authStore.token && authStore.user" class="mobile-greeting">
         Hi, {{ displayName }}
+        <span class="mobile-coins">💰${{ authStore.user.coins || 0 }}</span>
       </div>
 
       <button class="hamburger" @click="toggleMenu">
@@ -59,6 +78,18 @@ const displayName = computed(() => {
         </router-link>
 
         <div v-if="authStore.token && authStore.user" class="user-info">
+          
+          <div class="coin-section">
+            <span class="coin-balance">💰 現有金幣: {{ authStore.user.coins || 0 }}</span>
+            <button 
+              class="btn-checkin" 
+              @click="handleCheckIn" 
+              :disabled="hasCheckedInToday"
+              :class="{ 'checked': hasCheckedInToday }"
+            >
+              {{ hasCheckedInToday ? '已簽到 ✅' : '簽到領錢' }}
+            </button>
+          </div>
           <router-link to="/orders" class="nav-item" @click="closeMenu">我的訂單</router-link> 
           
           <span class="welcome-text desktop-greeting">
@@ -82,7 +113,7 @@ const displayName = computed(() => {
 .app-container { font-family: Arial, sans-serif; color: #333; }
 
 /* ========================================= */
-/* 🖥️ 電腦版樣式 (預設 >= 1024px) */
+/* 🖥️ 電腦版樣式 */
 /* ========================================= */
 .navbar { 
   display: flex; 
@@ -99,8 +130,6 @@ const displayName = computed(() => {
 .logo { font-size: 1.5rem; font-weight: bold; text-decoration: none; color: #2c3e50; }
 
 .hamburger { display: none; }
-
-/* 預設隱藏手機版招呼語 */
 .mobile-greeting { display: none; }
 
 .nav-right { display: flex; align-items: center; gap: 1.5rem; }
@@ -112,6 +141,51 @@ const displayName = computed(() => {
 .welcome-text { font-weight: bold; color: #42b883; }
 
 .cart-count { color: #e74c3c; font-weight: bold; }
+
+/* 👇 新增：金幣與簽到按鈕樣式 */
+.coin-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff8e1; /* 淡黃色背景 */
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1px solid #ffe082;
+}
+
+.coin-balance {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #f39c12;
+}
+
+.btn-checkin {
+  background: #f1c40f;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #333;
+  transition: 0.3s;
+}
+
+.btn-checkin:hover:not(:disabled) {
+  background: #f39c12;
+  transform: scale(1.05);
+}
+
+.btn-checkin:disabled {
+  background: #ddd;
+  color: #888;
+  cursor: default;
+}
+
+.btn-checkin.checked {
+  background: #e0e0e0; /* 已簽到的顏色 */
+}
+/* 👆 新增結束 */
 
 .btn-login, .btn-logout { 
   padding: 8px 16px; 
@@ -127,23 +201,26 @@ const displayName = computed(() => {
 .btn-logout { background-color: #f5f5f5; color: #666; border: 1px solid #ddd; }
 
 /* ========================================= */
-/* 📱 平板版優化 (768px ~ 1024px) */
+/* 📱 平板版優化 */
 /* ========================================= */
 @media (min-width: 768px) and (max-width: 1024px) {
   .navbar { padding: 1rem 1.5rem; }
   .nav-right { gap: 10px; }
   .nav-item { font-size: 0.9rem; }
-  .desktop-greeting { display: none; } /* 平板空間不夠，隱藏名字 */
+  .desktop-greeting { display: none; }
   .btn-login, .btn-logout { padding: 6px 12px; font-size: 0.85rem; }
+  
+  /* 平板版稍微縮小金幣區塊 */
+  .coin-section { padding: 4px 8px; }
+  .coin-balance { font-size: 0.85rem; }
 }
 
 /* ========================================= */
-/* 📱 手機版樣式 (< 768px) */
+/* 📱 手機版樣式 */
 /* ========================================= */
 @media (max-width: 768px) {
   .navbar { padding: 1rem; }
 
-  /* 1. 顯示漢堡 */
   .hamburger {
     display: block;
     background: none;
@@ -151,29 +228,28 @@ const displayName = computed(() => {
     font-size: 1.8rem;
     cursor: pointer;
     color: #333;
-    padding-left: 10px; /* 增加一點左邊距 */
+    padding-left: 10px;
   }
 
-  /* 2. 👇 顯示手機版招呼語 */
   .mobile-greeting {
-    display: block;
-    margin-left: auto; /* 自動推到最右邊 (但在漢堡左邊) */
+    display: flex;
+    flex-direction: column; /* 讓名字和錢垂直排 */
+    align-items: flex-end;
+    margin-left: auto;
     font-weight: bold;
     color: #42b883;
     font-size: 0.9rem;
-    /* 防止名字太長跑版，加點省略號 */
-    max-width: 100px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    max-width: 120px;
+    line-height: 1.2;
+  }
+  
+  .mobile-coins {
+    font-size: 0.8rem;
+    color: #f39c12;
   }
 
-  /* 3. 隱藏選單內的招呼語 (避免重複) */
-  .desktop-greeting {
-    display: none;
-  }
+  .desktop-greeting { display: none; }
 
-  /* 選單下拉樣式 */
   .nav-right {
     display: none;
     position: absolute;
@@ -198,6 +274,23 @@ const displayName = computed(() => {
     border-bottom: 1px solid #eee;
     text-align: center;
   }
+
+  /* 👇 手機版調整金幣簽到區塊 */
+  .coin-section {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #eee;
+    border-radius: 0;
+    justify-content: center; /* 居中 */
+    padding: 15px;
+    width: 100%;
+    box-sizing: border-box; /* 確保 padding 不會撐爆寬度 */
+  }
+  
+  .btn-checkin {
+    padding: 8px 20px; /* 按鈕大一點比較好按 */
+  }
+  /* 👆 調整結束 */
 
   .user-info, .guest-info {
     flex-direction: column;
