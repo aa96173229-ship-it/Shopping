@@ -36,8 +36,11 @@ const finalPrice = computed(() => {
 
 // 修改結帳函式
 const handleCheckout = () => {
-  // 把 "是否使用金幣" 的參數傳給 Store
-  cartStore.checkout({ useCoins: useCoins.value });
+  // 把 "是否使用金幣" 和 "最終金額" 一起傳給 Store
+  cartStore.checkout({ 
+    useCoins: useCoins.value,
+    finalAmount: finalPrice.value  // 👈 新增這行，讓確認視窗顯示折扣後的錢
+  });
 };
 </script>
 

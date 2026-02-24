@@ -104,7 +104,6 @@ export const useCartStore = defineStore('cart', {
       }
     },
 
-    // 👇👇👇 請補上這一段 👇👇👇
     async checkout(payload = {}) {
       const authStore = useAuthStore();
       
@@ -113,24 +112,31 @@ export const useCartStore = defineStore('cart', {
         return;
       }
 
-      // 二次確認
-      if (!confirm(`確定要結帳嗎？總金額: NT$ ${this.totalPrice}`)) {
+      // 1. 判斷要顯示在彈出視窗的金額 (如果有傳最終金額就用最終的，沒有就用原價)
+      const displayPrice = payload.finalAmount !== undefined ? payload.finalAmount : this.totalPrice;
+
+      // 2. 二次確認
+      if (!confirm(`確定要結帳嗎？總金額: NT$ ${displayPrice}`)) {
         return;
       }
 
       try {
-        // 2. 修正：把 payload (裡面包含 { useCoins: true }) 傳給後端
-        // 原本你是寫 {}，這樣後端永遠收不到折抵請求
-        await axios.post('https://shopping-backend-mdvl.onrender.com/api/orders', payload, {
+        // 3. 傳送 payload 給後端 (裡面包含 { useCoins: true })
+        // ⚠️ 請確認你的 API_URL 有定義，或是直接寫死網址
+        const res = await axios.post('https://shopping-backend-mdvl.onrender.com/api/orders', payload, {
           headers: { Authorization: `Bearer ${authStore.token}` }
         });
         
         alert('🎉 結帳成功！');
         
-        // 清空購物車
+        // 4. 👇 關鍵：結帳成功後，同步更新前端的金幣餘額！
+        if (res.data.remainingCoins !== undefined) {
+          authStore.user.coins = res.data.remainingCoins;
+          localStorage.setItem('user', JSON.stringify(authStore.user));
+        }
+
+        // 5. 清空購物車並跳轉
         this.items = [];
-        
-        // 導向
         router.push('/orders'); 
 
       } catch (error) {
