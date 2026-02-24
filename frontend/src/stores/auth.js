@@ -13,10 +13,17 @@ export const useAuthStore = defineStore('auth', {
     // 每日簽到
     async dailyCheckIn() {
         try {
-            // 這裡漏了 /api
-            const res = await axios.post('https://shopping-backend-mdvl.onrender.com/user/checkin', {}, {
-              headers: { Authorization: `Bearer ${this.token}` }
-            });
+            // 👇 補上 /api
+              const res = await axios.post('https://shopping-backend-mdvl.onrender.com/api/user/checkin', {}, {
+                headers: { Authorization: `Bearer ${this.token}` }
+              });
+              
+              this.user.coins = res.data.coins;
+              localStorage.setItem('user', JSON.stringify(this.user));
+              alert(res.data.message);
+            } catch (error) {
+              alert(error.response?.data?.message || '簽到失敗');
+            }
             // 更新本地的金幣顯示
             this.user.coins = res.data.coins;
             // 同步更新 LocalStorage
