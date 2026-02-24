@@ -13,10 +13,10 @@ export const useAuthStore = defineStore('auth', {
     // 每日簽到
     async dailyCheckIn() {
         try {
-            const res = await axios.post(`${API_URL}/user/checkin`, {}, {
-                headers: { Authorization: `Bearer ${this.token}` }
+            // 這裡漏了 /api
+            const res = await axios.post('https://shopping-backend-mdvl.onrender.com/user/checkin', {}, {
+              headers: { Authorization: `Bearer ${this.token}` }
             });
-            
             // 更新本地的金幣顯示
             this.user.coins = res.data.coins;
             // 同步更新 LocalStorage
