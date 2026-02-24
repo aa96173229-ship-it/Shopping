@@ -69,6 +69,10 @@ const handleCheckIn = async () => {
       </button>
 
       <div class="nav-right" :class="{ 'show-menu': isMenuOpen }">
+
+        <router-link to="/scratch" class="nav-item" @click="closeMenu">
+          刮刮樂
+        </router-link>
         
         <router-link to="/cart" class="nav-item" @click="closeMenu">
           購物車

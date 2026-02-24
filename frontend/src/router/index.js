@@ -6,6 +6,7 @@ import CartView from '../views/CartView.vue'
 import OrderView from '../views/OrderView.vue' // 👈 1. 新增：引入訂單頁面
 import { useAuthStore } from '../stores/auth'
 import AdminView from '../views/AdminView.vue';
+import ScratchView from '../views/ScratchView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -66,6 +67,12 @@ const router = createRouter({
         if (authStore.token) next();
         else next('/login');
       } 
+    },
+    //game
+    {
+      path: '/scratch',
+      name: 'scratch',
+      component: ScratchView
     }
   ]
 })
