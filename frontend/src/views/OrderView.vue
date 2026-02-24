@@ -74,7 +74,7 @@ const getDiscount = (order) => {
             </div>
             
             <div v-if="getDiscount(order) > 0" class="bill-row discount-row">
-              <span>💰 金幣折抵:</span>
+              <span> 金幣折抵:</span>
               <span>- NT$ {{ getDiscount(order) }}</span>
             </div>
           </div>
