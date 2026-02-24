@@ -68,6 +68,7 @@ router.post('/login', async (req, res) => {
         id: user.id,
         email: user.email,
         nickname: user.nickname,
+        coins: user.coins,
         isAdmin: user.isAdmin // 👈 同時回傳給前端 Pinia 紀錄
       }
     });
