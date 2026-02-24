@@ -17,6 +17,7 @@ const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart');
 const orderRoutes = require('./routes/orders');
 const userRoutes = require('./routes/user'); // 👈 1. 補上這行！引入簽到路由
+const gamesRoutes = require('./routes/games');
 
 // ==============================
 // 資料庫關聯設定
@@ -48,6 +49,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/user', userRoutes); // 👈 2. 補上這行！讓 /api/user/checkin 生效
+app.use('/api/games', gamesRoutes);
 
 // 靜態檔案
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
