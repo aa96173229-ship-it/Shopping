@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
-// 👇👇👇 1. 統一設定 Render 網址 (我都幫你填好了) 👇👇👇
+// 👇 統一設定 Render 網址
 const API_URL = 'https://shopping-backend-mdvl.onrender.com';
 
 export const useAuthStore = defineStore('auth', {
@@ -10,32 +10,37 @@ export const useAuthStore = defineStore('auth', {
     user: JSON.parse(localStorage.getItem('user')) || null, 
   }),
   actions: {
+    // ==============================
     // 每日簽到
+    // ==============================
     async dailyCheckIn() {
-        try {
-            // 👇 補上 /api
-              const res = await axios.post('https://shopping-backend-mdvl.onrender.com/api/user/checkin', {}, {
-                headers: { Authorization: `Bearer ${this.token}` }
-              });
-              
-              this.user.coins = res.data.coins;
-              localStorage.setItem('user', JSON.stringify(this.user));
-              alert(res.data.message);
-            } catch (error) {
-              alert(error.response?.data?.message || '簽到失敗');
-            }
-            // 更新本地的金幣顯示
-            this.user.coins = res.data.coins;
-            // 同步更新 LocalStorage
-            localStorage.setItem('user', JSON.stringify(this.user));
-            
-            alert(res.data.message); // "簽到成功！獲得 $20 金幣"
-        } catch (error) {
-            alert(error.response?.data?.message || '簽到失敗');
+      try {
+        // 利用上面定義的 API_URL，寫法更乾淨
+        const res = await axios.post(`${API_URL}/api/user/checkin`, {}, {
+          headers: { Authorization: `Bearer ${this.token}` }
+        });
+        
+        // 1. 更新本地的金幣顯示
+        this.user.coins = res.data.coins;
+        // 2. 順便更新簽到日期，這樣前端按鈕才會馬上變成「已簽到」
+        if (res.data.checkInDate) {
+          this.user.lastCheckInDate = res.data.checkInDate;
         }
+        
+        // 3. 同步更新 LocalStorage，確保重整後不會消失
+        localStorage.setItem('user', JSON.stringify(this.user));
+        
+        // 4. 顯示成功訊息
+        alert(res.data.message); 
+
+      } catch (error) {
+        alert(error.response?.data?.message || '簽到失敗');
+      }
     },
-    // --- 登入功能 ---
-    // ... 前面省略 ...
+
+    // ==============================
+    // 登入功能
+    // ==============================
     async login(email, password) {
       try {
         const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
@@ -54,25 +59,27 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    // ==============================
+    // 註冊功能
+    // ==============================
     async register(email, password, nickname) {
-      // 👇👇👇 加入這一行 console.log 👇👇👇
-  console.log('🔥 正在嘗試連線到:', `${API_URL}/api/auth/register`);
-  try {
-    const res = await axios.post(`${API_URL}/api/auth/register`, {
-      email,
-      password,
-      nickname
-    });
-    return { success: true };
-  } catch (error) {
-    // 這裡會把後端傳回來的 "所有欄位都必須填寫" 抓出來
-    const msg = error.response?.data?.message || '註冊失敗';
-    return { success: false, message: msg };
-  }
-},
-// ... 後面省略 ...
-    // --- 👆👆👆 新增結束 👆👆👆 ---
+      console.log('🔥 正在嘗試連線到:', `${API_URL}/api/auth/register`);
+      try {
+        const res = await axios.post(`${API_URL}/api/auth/register`, {
+          email,
+          password,
+          nickname
+        });
+        return { success: true };
+      } catch (error) {
+        const msg = error.response?.data?.message || '註冊失敗';
+        return { success: false, message: msg };
+      }
+    },
 
+    // ==============================
+    // 登出功能
+    // ==============================
     logout() {
       this.token = '';
       this.user = null;
