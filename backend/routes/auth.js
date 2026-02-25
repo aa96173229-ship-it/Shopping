@@ -81,9 +81,6 @@ router.post('/login', async (req, res) => {
 
 // ... 前面的程式碼 ...
 
-// 需要引入 bcrypt 來比對和加密密碼 (請加在檔案最上面如果沒有的話)
-const bcrypt = require('bcryptjs'); 
-
 // 📝 修改個人資料 (信箱、暱稱、密碼)
 router.put('/profile', authenticate, async (req, res) => {
     try {
