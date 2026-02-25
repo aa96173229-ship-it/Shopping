@@ -32,17 +32,15 @@ const displayName = computed(() => {
   return '';
 });
 
-// 👇 新增：判斷今天是否已經簽到過
+// 判斷今天是否已經簽到過
 const hasCheckedInToday = computed(() => {
   if (!authStore.user?.lastCheckInDate) return false;
-  // 取得今天的日期字串 (YYYY-MM-DD)
   const today = new Date().toISOString().split('T')[0];
   return authStore.user.lastCheckInDate === today;
 });
 
-// 👇 新增：處理簽到點擊
+// 處理簽到點擊
 const handleCheckIn = async () => {
-  // 呼叫 Store 裡的簽到功能
   if (authStore.dailyCheckIn) {
     await authStore.dailyCheckIn();
   } else {
@@ -71,7 +69,7 @@ const handleCheckIn = async () => {
       <div class="nav-right" :class="{ 'show-menu': isMenuOpen }">
 
         <router-link to="/scratch" class="nav-item" @click="closeMenu">
-          刮刮樂
+          🎟️ 刮刮樂
         </router-link>
         
         <router-link to="/cart" class="nav-item" @click="closeMenu">
@@ -94,7 +92,10 @@ const handleCheckIn = async () => {
               {{ hasCheckedInToday ? '已簽到 ✅' : '簽到領錢' }}
             </button>
           </div>
+          
           <router-link to="/orders" class="nav-item" @click="closeMenu">我的訂單</router-link> 
+          
+          <router-link to="/profile" class="nav-item" @click="closeMenu">⚙️ 帳號設定</router-link>
           
           <span class="welcome-text desktop-greeting">
             Hi, {{ displayName }}
@@ -146,12 +147,11 @@ const handleCheckIn = async () => {
 
 .cart-count { color: #e74c3c; font-weight: bold; }
 
-/* 👇 新增：金幣與簽到按鈕樣式 */
 .coin-section {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #fff8e1; /* 淡黃色背景 */
+  background: #fff8e1;
   padding: 5px 10px;
   border-radius: 20px;
   border: 1px solid #ffe082;
@@ -187,9 +187,8 @@ const handleCheckIn = async () => {
 }
 
 .btn-checkin.checked {
-  background: #e0e0e0; /* 已簽到的顏色 */
+  background: #e0e0e0;
 }
-/* 👆 新增結束 */
 
 .btn-login, .btn-logout { 
   padding: 8px 16px; 
@@ -214,7 +213,6 @@ const handleCheckIn = async () => {
   .desktop-greeting { display: none; }
   .btn-login, .btn-logout { padding: 6px 12px; font-size: 0.85rem; }
   
-  /* 平板版稍微縮小金幣區塊 */
   .coin-section { padding: 4px 8px; }
   .coin-balance { font-size: 0.85rem; }
 }
@@ -237,7 +235,7 @@ const handleCheckIn = async () => {
 
   .mobile-greeting {
     display: flex;
-    flex-direction: column; /* 讓名字和錢垂直排 */
+    flex-direction: column; 
     align-items: flex-end;
     margin-left: auto;
     font-weight: bold;
@@ -279,22 +277,20 @@ const handleCheckIn = async () => {
     text-align: center;
   }
 
-  /* 👇 手機版調整金幣簽到區塊 */
   .coin-section {
     background: transparent;
     border: none;
     border-bottom: 1px solid #eee;
     border-radius: 0;
-    justify-content: center; /* 居中 */
+    justify-content: center;
     padding: 15px;
     width: 100%;
-    box-sizing: border-box; /* 確保 padding 不會撐爆寬度 */
+    box-sizing: border-box; 
   }
   
   .btn-checkin {
-    padding: 8px 20px; /* 按鈕大一點比較好按 */
+    padding: 8px 20px; 
   }
-  /* 👆 調整結束 */
 
   .user-info, .guest-info {
     flex-direction: column;

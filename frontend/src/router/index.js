@@ -7,6 +7,7 @@ import OrderView from '../views/OrderView.vue' // 👈 1. 新增：引入訂單�
 import { useAuthStore } from '../stores/auth'
 import AdminView from '../views/AdminView.vue';
 import ScratchView from '../views/ScratchView.vue';
+import ProfileView from '../views/ProfileView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -73,7 +74,12 @@ const router = createRouter({
       path: '/scratch',
       name: 'scratch',
       component: ScratchView
-    }
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileView
+    },
   ]
 })
 
