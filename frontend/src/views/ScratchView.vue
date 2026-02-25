@@ -53,7 +53,7 @@ const buyTicket = async () => {
       <div class="ticket-grid">
         
         <div class="game-zone game1">
-          <div class="zone-title">🏆 遊戲 1</div>
+          <div class="zone-title">🏆 獎盃對對碰</div>
           <p class="rule-text">刮出2個相同金額得獎</p>
           <ScratchArea class="scratch-box wide">
             <div class="prize-row">
@@ -64,7 +64,7 @@ const buyTicket = async () => {
         </div>
 
        <div class="game-zone game2">
-          <div class="zone-title">🧨 遊戲 2</div>
+          <div class="zone-title">🧨 雙響炮</div>
           <p class="rule-text">刮出2個相同金額得獎</p>
           
           <div class="game2-container">
@@ -79,7 +79,7 @@ const buyTicket = async () => {
           </div>
 
         <div class="game-zone game3">
-          <div class="zone-title">💰 遊戲 3</div>
+          <div class="zone-title">💰 三人成虎</div>
           <p class="rule-text">刮出3個相同金額得獎</p>
           <ScratchArea class="scratch-box tall">
             <div class="prize-col">
