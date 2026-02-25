@@ -81,11 +81,15 @@ export const useAuthStore = defineStore('auth', {
     // 登出功能
     // ==============================
     logout() {
-      this.token = '';
-      this.user = null;
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.reload(); 
-    }
+  // 1. 清空 Pinia 狀態
+  this.token = '';
+  this.user = null;
+  
+  // 2. 清空瀏覽器暫存
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  
+  // 🌟 3. 把 window.location.reload(); 刪掉！交給外面的 router.push 去跳轉就好
+  }
   }
 });

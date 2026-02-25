@@ -16,8 +16,17 @@ const router = useRouter();
 const handleSubmit = async () => {
   if (isLogin.value) {
     // --- 登入邏輯 ---
-    const success = await authStore.login(email.value, password.value);
-    if (success) router.push('/');
+    // 🌟 1. 把回傳的物件存進 response (或是 result)
+    const response = await authStore.login(email.value, password.value);
+    
+    // 🌟 2. 判斷物件裡面的 success 屬性是 true 還是 false
+    if (response.success) {
+      alert('登入成功！');
+      router.push('/');
+    } else {
+      // 🌟 3. 如果是 false，就把物件裡面的 message 彈出來給使用者看！
+      alert(response.message); 
+    }
   } else {
     // --- 註冊邏輯 ---
     try {
