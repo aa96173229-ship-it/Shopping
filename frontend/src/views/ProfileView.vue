@@ -20,7 +20,7 @@ const updateProfile = async () => {
   
   try {
     // ⚠️ 如果你推上 Render，記得把這裡改成 https://shopping-backend-...
-    const res = await axios.put('http://localhost:3000/api/auth/profile', {
+    const res = await axios.put('https://shopping-backend-mdvl.onrender.com/api/auth/profile', {
       email: email.value,       // 👈 把新信箱傳給後端
       nickname: nickname.value,
       oldPassword: oldPassword.value,
