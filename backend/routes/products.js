@@ -91,4 +91,35 @@ router.delete('/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
+// 🛒 取得商品列表 (支援搜尋與分類過濾)
+router.get('/', async (req, res) => {
+    try {
+        // 從網址列抓取前端傳來的參數 (例如: ?search=外套&category=衣服)
+        const { search, category } = req.query;
+        
+        // 準備一個空的條件包
+        let whereClause = {};
+
+        // 1. 如果前端有指定分類，且不是選「全部」
+        if (category && category !== '全部') {
+            whereClause.category = category;
+        }
+
+        // 2. 如果前端有打搜尋關鍵字
+        if (search) {
+            whereClause.name = {
+                [Op.like]: `%${search}%` // 只要商品名稱「包含」這個關鍵字就抓出來
+            };
+        }
+
+        // 去資料庫找符合條件的商品！
+        const products = await Product.findAll({ where: whereClause });
+        
+        res.json(products);
+    } catch (error) {
+        console.error('獲取商品失敗:', error);
+        res.status(500).json({ message: '伺服器錯誤' });
+    }
+});
+
 module.exports = router;

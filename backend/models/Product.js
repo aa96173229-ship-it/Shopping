@@ -27,6 +27,11 @@ const Product = sequelize.define('Product', {
   description: {
     type: DataTypes.TEXT,
     allowNull: true,
+  },
+  category: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: '其他'
   }
 });
 

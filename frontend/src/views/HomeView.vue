@@ -1,18 +1,33 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 import { useCartStore } from '../stores/cart'; 
 
-// 這裡定義的是「全部商品 (複數)」
 const products = ref([]);
 const loading = ref(true);
 const cartStore = useCartStore(); 
 
-onMounted(async () => {
+// 🌟 新增：搜尋與分類狀態
+const searchQuery = ref('');
+const selectedCategory = ref('全部');
+const categories = ['全部', '衣服', '褲子', '鞋子', '配件', '其他'];
+
+// 🌟 將抓取資料獨立成一個函式，方便搜尋/切換分類時呼叫
+const fetchProducts = async () => {
+  loading.value = true;
   try {
-    const response = await axios.get('https://shopping-backend-mdvl.onrender.com/api/products');
+    // 準備傳給後端的參數
+    const params = {};
+    if (selectedCategory.value !== '全部') {
+      params.category = selectedCategory.value;
+    }
+    if (searchQuery.value.trim() !== '') {
+      params.search = searchQuery.value.trim();
+    }
+
+    const response = await axios.get('https://shopping-backend-mdvl.onrender.com/api/products', { params });
     
-    // 把資料塞進 products (複數)
+    // 把資料塞進 products，並保留你原本完美的 quantity 邏輯
     products.value = response.data.map(p => ({
       ...p,
       quantity: 1 
@@ -23,28 +38,71 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// 網頁掛載時抓取一次
+onMounted(() => {
+  fetchProducts();
 });
+
+// 🌟 監聽分類變化，一切換就自動重抓資料
+watch(selectedCategory, () => {
+  fetchProducts();
+});
+
+// 🌟 點擊搜尋或按下 Enter 時執行
+const handleSearch = () => {
+  fetchProducts();
+};
 </script>
 
 <template>
   <main class="home-container">
     <h1>🛍️ 熱門商品</h1>
     
+    <div class="toolbar">
+      <div class="search-box">
+        <input 
+          type="text" 
+          v-model="searchQuery" 
+          @keyup.enter="handleSearch" 
+          placeholder="找商品... (例如: 外套)"
+        />
+        <button @click="handleSearch" class="btn-search">搜尋 🔍</button>
+      </div>
+
+      <div class="category-tabs">
+        <button 
+          v-for="cat in categories" 
+          :key="cat"
+          :class="['tab-btn', { active: selectedCategory === cat }]"
+          @click="selectedCategory = cat"
+        >
+          {{ cat }}
+        </button>
+      </div>
+    </div>
+
     <div v-if="loading" class="loading">正在搬運商品中...</div>
+    
+    <div v-else-if="products.length === 0" class="empty-state">
+      😢 找不到符合條件的商品，換個關鍵字或分類試試看吧！
+    </div>
 
     <div v-else class="product-grid">
-      
       <div v-for="product in products" :key="product.id" class="product-card">
         
         <router-link :to="{ name: 'product', params: { id: product.id } }">
           <div class="image-box">
-            <img :src="product.imageUrl" :alt="product.title" />
+            <img :src="product.imageUrl || 'https://via.placeholder.com/200?text=No+Image'" :alt="product.title" />
           </div>
         </router-link>
         
         <div class="info">
+          <span class="category-badge">{{ product.category || '其他' }}</span>
+
           <router-link :to="{ name: 'product', params: { id: product.id } }" class="title-link">
-            <h3>{{ product.title }}</h3>
+            <h3>{{ product.title || product.name }}</h3>
           </router-link>
           
           <p class="price">NT$ {{ product.price }}</p>
@@ -77,9 +135,8 @@ onMounted(async () => {
             </button>
           </div>
         </div>
-      
       </div> 
-      </div>
+    </div>
   </main>
 </template>
 
@@ -92,10 +149,105 @@ onMounted(async () => {
 
 h1 {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   color: #2c3e50;
 }
 
+/* =========================================
+   🔍 搜尋與分類樣式 (整合進來)
+========================================= */
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 2rem;
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.search-box {
+  display: flex;
+  width: 100%;
+  max-width: 500px;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 10px 15px;
+  border: 2px solid #ddd;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  font-size: 1rem;
+  outline: none;
+}
+
+.search-box input:focus { border-color: #42b883; }
+
+.btn-search {
+  padding: 0 20px;
+  background: #42b883;
+  color: white;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.btn-search:hover { background: #3aa876; }
+
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 20px;
+  cursor: pointer;
+  color: #555;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  border-color: #42b883;
+  color: #42b883;
+}
+
+.tab-btn.active {
+  background: #42b883;
+  color: white;
+  border-color: #42b883;
+  box-shadow: 0 4px 6px rgba(66, 184, 131, 0.3);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.2rem;
+  color: #7f8c8d;
+}
+
+.category-badge {
+  align-self: flex-start;
+  background: #eee;
+  color: #666;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+}
+
+/* =========================================
+   🛍️ 原本的商品網格樣式 (保留)
+========================================= */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -120,6 +272,7 @@ h1 {
 .image-box {
   height: 200px;
   overflow: hidden;
+  background: #f9f9f9;
 }
 
 .image-box img {
@@ -140,6 +293,11 @@ h1 {
 .title-link {
   text-decoration: none;
   color: inherit;
+  margin-bottom: 5px;
+}
+
+.title-link h3 {
+  margin: 0;
 }
 
 .title-link:hover h3 {
