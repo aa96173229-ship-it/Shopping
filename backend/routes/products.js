@@ -8,7 +8,7 @@ const authenticateAdmin = require('../middleware/admin'); // 👈 記得要引�
 // ==============================
 // 🟢 公開路由 (所有人都能用)
 // ==============================
-/ 🤫 隱藏版秘密 API：用來觸發資料庫分類更新
+// 🤫 隱藏版秘密 API：用來觸發資料庫分類更新
 router.get('/secret-update-categories', async (req, res) => {
     try {
         const products = await Product.findAll();
