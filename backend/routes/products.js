@@ -122,4 +122,40 @@ router.get('/', async (req, res) => {
     }
 });
 
+// 🤫 隱藏版秘密 API：用來觸發資料庫分類更新
+router.get('/secret-update-categories', async (req, res) => {
+    try {
+        const products = await Product.findAll();
+        const fallbackCategories = ['衣服', '褲子', '鞋子', '配件', '其他'];
+        let count = 0;
+
+        for (let product of products) {
+            const productName = product.title || product.name || '';
+            let targetCategory = '其他';
+
+            // 簡單的關鍵字判斷
+            if (productName.includes('外套') || productName.includes('T恤') || productName.includes('衣') || productName.includes('衫')) {
+                targetCategory = '衣服';
+            } else if (productName.includes('褲')) {
+                targetCategory = '褲子';
+            } else if (productName.includes('鞋')) {
+                targetCategory = '鞋子';
+            } else if (productName.includes('帽') || productName.includes('包') || productName.includes('襪')) {
+                targetCategory = '配件';
+            } else {
+                targetCategory = fallbackCategories[Math.floor(Math.random() * fallbackCategories.length)];
+            }
+
+            product.category = targetCategory;
+            await product.save();
+            count++;
+        }
+
+        res.send(`<h1>🎉 太神啦！成功更新了 ${count} 筆商品的分類！</h1><p>現在你可以關閉這個網頁，回到你的商城測試了。</p>`);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('更新失敗：' + error.message);
+    }
+});
+
 module.exports = router;
