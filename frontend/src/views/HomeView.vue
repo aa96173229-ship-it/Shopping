@@ -13,25 +13,37 @@ const selectedCategory = ref('全部');
 const categories = ['全部', '衣服', '褲子', '鞋子', '配件', '其他'];
 
 // 🌟 將抓取資料獨立成一個函式，方便搜尋/切換分類時呼叫
+// 🌟 升級版：前端自己做過濾 (完全不用管後端聽不聽得懂)
 const fetchProducts = async () => {
   loading.value = true;
   try {
-    // 準備傳給後端的參數
-    const params = {};
-    if (selectedCategory.value !== '全部') {
-      params.category = selectedCategory.value;
-    }
-    if (searchQuery.value.trim() !== '') {
-      params.search = searchQuery.value.trim();
-    }
-
-    const response = await axios.get('https://shopping-backend-mdvl.onrender.com/api/products', { params });
+    // 1. 直接跟後端拿「所有商品」，我們不傳參數給它了
+    const response = await axios.get('https://shopping-backend-mdvl.onrender.com/api/products');
     
-    // 把資料塞進 products，並保留你原本完美的 quantity 邏輯
-    products.value = response.data.map(p => ({
+    // 2. 先把所有商品加上 quantity
+    let allProducts = response.data.map(p => ({
       ...p,
       quantity: 1 
     }));
+
+    // 🌟 3. 關鍵魔法：在前端過濾【分類】
+    if (selectedCategory.value !== '全部') {
+      // 只留下 category 等於我們點擊的分類的商品
+      allProducts = allProducts.filter(p => p.category === selectedCategory.value);
+    }
+
+    // 🌟 4. 關鍵魔法：在前端過濾【搜尋關鍵字】
+    if (searchQuery.value.trim() !== '') {
+      const keyword = searchQuery.value.trim().toLowerCase(); // 轉小寫比較準
+      allProducts = allProducts.filter(p => {
+        // 抓出商品名稱，並判斷有沒有包含我們打的字
+        const itemName = p.title || p.name || '';
+        return itemName.toLowerCase().includes(keyword);
+      });
+    }
+
+    // 5. 把過濾完的結果，交給畫面上顯示！
+    products.value = allProducts;
 
   } catch (error) {
     console.error('抓取商品失敗:', error);
@@ -39,7 +51,6 @@ const fetchProducts = async () => {
     loading.value = false;
   }
 };
-
 // 網頁掛載時抓取一次
 onMounted(() => {
   fetchProducts();
@@ -338,16 +349,25 @@ h1 {
   overflow: hidden;
 }
 
-.qty-control button {
-  width: 28px;
+.qty-control input {
+  width: 32px;
   height: 32px;
   border: none;
+  text-align: center;
+  font-size: 0.9rem;
   background: transparent;
-  cursor: pointer;
-  font-weight: bold;
-  color: #555;
-  transition: background 0.2s;
-  padding: 0;
+  outline: none;
+  
+  /* 👇 修正這裡：同時提供專屬版與標準版 */
+  -moz-appearance: textfield; /* 給 Firefox 看的 */
+  appearance: textfield;      /* 🌟 補上這行標準版，警告就會消失！ */
+}
+
+/* 🌟 順便補上這段：把 Chrome, Safari, Edge 的上下箭頭也徹底隱藏 */
+.qty-control input::-webkit-outer-spin-button,
+.qty-control input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .qty-control button:hover:not(:disabled) {
