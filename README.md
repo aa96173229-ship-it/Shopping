@@ -53,8 +53,9 @@ PORT=3000
 ```
 
 ### 3. 啟動 Frontend
-**開啟全新的終端機視窗，進入 frontend 資料夾並安裝套件**
+**進入 frontend 資料夾並安裝套件**
 ```bash
+cd ..
 cd frontend
 npm install
 ```
