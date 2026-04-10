@@ -60,7 +60,7 @@ npm run dev
 # 後端會運行在 http://localhost:3000
 ```
 
-### 3. 啟動 Frontend (前端)
+### 3. 啟動 Frontend
 **開啟全新的終端機視窗，進入 frontend 資料夾並安裝套件**
 ```bash
 cd frontend
@@ -82,8 +82,8 @@ npm run dev
 ### `users` (使用者資訊)
 | 欄位 | 型別 | 說明 |
 | :--- | :--- | :--- |
-| id | SERIAL | 主鍵 (Primary Key) |
-| email | VARCHAR(255) | 登入帳號 (Unique) |
+| id | SERIAL | 主鍵 |
+| email | VARCHAR(255) | 登入帳號 |
 | password | VARCHAR(255) | 雜湊密碼 |
 | points | INT | 遊戲化積分 / 購物紅利 |
 | created_at | TIMESTAMP | 帳號建立時間 |
@@ -111,7 +111,7 @@ npm run dev
 | :--- | :--- | :--- |
 | id | SERIAL | 主鍵 |
 | user_id | INT | 關聯 users.id |
-| action_type | VARCHAR(50) | 動作類型 (如：check_in, scratch_card) |
+| action_type | VARCHAR(50) | 動作類型 |
 | reward | INT | 獲得的積分或獎勵額度 |
 
 ---
@@ -130,7 +130,7 @@ npm run dev
 系統核心功能
 
 管理者後台 (Admin)
-* **測試帳號:** `shop6@gmail.com` / **密碼:** `shop6`
+* **測試帳號:** `shop6@test.com` / **密碼:** `shop6`
 * 具備完整商品管理權限：新增、刪除分類，以及動態修改商品資訊與庫存狀態。
 
 小遊戲功能
