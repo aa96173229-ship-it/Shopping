@@ -67,6 +67,7 @@ npm install jsonwebtoken
 
 **啟動伺服器**
 ```bash
+cd ..
 npm run dev
 ```
 
