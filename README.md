@@ -44,6 +44,14 @@ cd backend
 npm install
 ```
 
+### 3. 啟動 Frontend
+**開啟全新的終端機視窗，進入 frontend 資料夾並安裝套件**
+```bash
+cd frontend
+npm install
+```
+
+
 **配置環境變數**
 在 `backend` 根目錄建立 `.env` 檔案，並填寫以下資訊：
 ```env
@@ -57,23 +65,9 @@ PORT=3000
 npm install jsonwebtoken
 ```
 
-**啟動後端開發伺服器**
+**啟動伺服器**
 ```bash
 npm run dev
-# 後端會運行在 http://localhost:3000
-```
-
-### 3. 啟動 Frontend
-**開啟全新的終端機視窗，進入 frontend 資料夾並安裝套件**
-```bash
-cd frontend
-npm install
-```
-
-**啟動前端開發伺服器**
-```bash
-npm run dev
-# 前端會運行在 http://localhost:5173
 ```
 
 ---
