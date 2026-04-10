@@ -34,7 +34,7 @@ shopping-site
 ### 1. 下載專案
 ```bash
 git clone https://github.com/aa96173229-ship-it/Shopping.git
-cd shopping-site
+cd shopping
 ```
 
 ### 2. 啟動 Backend
