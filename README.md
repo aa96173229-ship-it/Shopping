@@ -31,7 +31,7 @@ shopping-site
 
 ---
 
-## 🚀 安裝與執行方式 (Getting Started)
+## 安裝與執行方式
 
 ### 1. 下載專案
 ```bash
@@ -39,7 +39,7 @@ git clone [https://github.com/yourusername/shopping-site.git](https://github.com
 cd shopping-site
 ```
 
-### 2. 啟動 Backend (後端)
+### 2. 啟動 Backend
 **進入 backend 資料夾並安裝套件**
 ```bash
 cd backend
@@ -98,15 +98,15 @@ npm run dev
 | image_url | TEXT | 圖片連結 |
 | stock | INT | 庫存數量 |
 
-### `carts` & `cart_items` (購物車系統)
+### `carts` & `cart_items` 購物車系統
 * **carts:** `id` (SERIAL), `user_id` (INT, FK 關聯 users)
 * **cart_items:** `id` (SERIAL), `cart_id` (INT, FK), `product_id` (INT, FK), `quantity` (INT)
 
-### `orders` & `order_items` (訂單系統)
+### `orders` & `order_items` 訂單系統
 * **orders:** `id` (SERIAL), `user_id` (INT, FK), `total` (DECIMAL), `created_at` (TIMESTAMP)
 * **order_items:** `id` (SERIAL), `order_id` (INT, FK), `product_id` (INT, FK), `quantity` (INT), `price` (DECIMAL 結帳單價)
 
-### `gamification_logs` (遊戲化互動紀錄)
+### `gamification_logs` 遊戲
 | 欄位 | 型別 | 說明 |
 | :--- | :--- | :--- |
 | id | SERIAL | 主鍵 |
