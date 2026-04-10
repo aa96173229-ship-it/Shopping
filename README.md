@@ -52,6 +52,11 @@ DATABASE_URL=postgres://[user]:[password]@[neon_hostname]/[dbname]?sslmode=requi
 PORT=3000
 ```
 
+**安裝套件**
+```
+npm install jsonwebtoken
+```
+
 **啟動後端開發伺服器**
 ```bash
 npm run dev
