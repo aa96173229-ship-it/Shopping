@@ -44,20 +44,19 @@ cd backend
 npm install
 ```
 
-### 3. 啟動 Frontend
-**開啟全新的終端機視窗，進入 frontend 資料夾並安裝套件**
-```bash
-cd frontend
-npm install
-```
-
-
 **配置環境變數**
 在 `backend` 根目錄建立 `.env` 檔案，並填寫以下資訊：
 ```env
 JWT_SECRET=your_super_secret_key
 DATABASE_URL=postgres://[user]:[password]@[neon_hostname]/[dbname]?sslmode=require
 PORT=3000
+```
+
+### 3. 啟動 Frontend
+**開啟全新的終端機視窗，進入 frontend 資料夾並安裝套件**
+```bash
+cd frontend
+npm install
 ```
 
 **安裝套件**
