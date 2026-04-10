@@ -24,8 +24,8 @@
 ```text
 shopping-site
 │
-├─ frontend/          # Vue 前端應用程式 (User Interface)
-├─ backend/           # Express 後端 API 伺服器 (Business Logic)
+├─ frontend/          # Vue 前端應用程式 
+├─ backend/           # Express 後端 API 伺服器 
 └─ README.md
 ```
 
