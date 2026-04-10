@@ -1,6 +1,6 @@
 本專案為一個使用 Vue 3 + Express + Neon (PostgreSQL) 開發的現代化全端購物網站。除了具備完整的電商購物流程外，更導入了「每日簽到」與「刮刮樂」等遊戲化互動機制。
 
-使用技術
+## 使用技術
 
 **前端 - 部署於 Vercel**
 * **核心框架:** Vue 3 (Composition API), Vite
@@ -17,7 +17,7 @@
 
 ---
 
-專案結構
+## 專案結構
 
 ```text
 shopping-site
