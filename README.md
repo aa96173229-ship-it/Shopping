@@ -62,12 +62,12 @@ npm install
 
 **安裝套件**
 ```
+cd ..
 npm install jsonwebtoken
 ```
 
 **啟動伺服器**
 ```bash
-cd ..
 npm run dev
 ```
 
