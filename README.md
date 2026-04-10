@@ -4,12 +4,12 @@
 
 使用技術
 
-前端 (Frontend) - 部署於 Vercel**
+**前端 - 部署於 Vercel**
 * **核心框架:** Vue 3 (Composition API), Vite
 * **路由管理:** Vue Router
 * **樣式設計:** 原生 CSS (Flexbox / Grid 排版)
 
-**後端 (Backend) - 部署於 Render**
+**後端 - 部署於 Render**
 * **核心框架:** Node.js, Express.js
 * **資料庫:** PostgreSQL (採用 Neon Serverless Database)
 
